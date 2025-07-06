@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { ClerkProvider } from "@clerk/nextjs";
-import Header from "@/components/header";
 import { ThemeProvider } from "@/components/ThemeProvider";
 
 const geistSans = Geist({
@@ -35,7 +34,7 @@ export default function RootLayout({
         <body
           className={`${geistSans.variable} ${geistMono.variable} antialiased`}
         >
-          <div id="dialog-portal" className="absolute z-[9999]"></div>
+          {/* <div id="dialog-portal" className="absolute z-[9999]"></div> */}
 
           <ThemeProvider
             attribute="class"
@@ -43,7 +42,6 @@ export default function RootLayout({
             enableSystem
             disableTransitionOnChange
           >
-            <Header />
             {children}
           </ThemeProvider>
         </body>

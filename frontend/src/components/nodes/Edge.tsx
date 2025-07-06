@@ -1,11 +1,17 @@
 "use client";
+
 import {
   BaseEdge,
   EdgeProps,
-  getSmoothStepPath,
   getSimpleBezierPath,
+  EdgeLabelRenderer,
+  getStraightPath,
+  type Edge,
 } from "@xyflow/react";
 import React from "react";
+import { Button } from "../ui/button";
+import { Trash2 } from "lucide-react";
+import useHistory from "@/hooks/useHistory";
 
 export default function Edge({
   sourceX,
@@ -16,6 +22,7 @@ export default function Edge({
   targetPosition,
   markerEnd,
   data = {},
+  selected,
   ...rest
 }: EdgeProps) {
   const [d] = getSimpleBezierPath({
@@ -26,7 +33,14 @@ export default function Edge({
     sourcePosition,
     targetPosition,
   });
-  console.log("custom edge", rest, data.activate, data);
+  const [, labelX, labelY] = getStraightPath({
+    sourceX,
+    sourceY,
+    targetX,
+    targetY,
+  });
+  const { removeEdge } = useHistory();
+
   return (
     <>
       <BaseEdge
@@ -36,7 +50,22 @@ export default function Edge({
         markerEnd={markerEnd}
         path={d}
       />
-      {data.activate && (
+      {selected && (
+        <EdgeLabelRenderer>
+          <Button
+            variant="ghost"
+            style={{
+              position: "absolute",
+              transform: `translate(-50%, -50%) translate(${labelX}px, ${labelY}px)`,
+              pointerEvents: "all",
+            }}
+            onClick={() => removeEdge({ id: rest.id } as Edge)}
+          >
+            <Trash2 color="red" />
+          </Button>
+        </EdgeLabelRenderer>
+      )}
+      {!data.activate && (
         <>
           <circle
             r="4"

@@ -1,6 +1,6 @@
 import { BuiltInNode, Edge, Node, Viewport } from "@xyflow/react";
 import { LucideProps } from "lucide-react";
-import { ForwardRefExoticComponent } from "react";
+import React, { ForwardRefExoticComponent } from "react";
 
 export enum NodeType {
   NewFlow = "new-flow",
@@ -22,11 +22,12 @@ export enum NodeType {
 }
 
 export type NodeData = {
-  id: string;
-  type: NodeType;
-  inputs: Record<string, unknown>;
-  outputs: Record<string, unknown>;
+  // id: string;
+  type?: NodeType;
+  inputs?: Record<string, unknown>[];
+  output?: Record<string, unknown>;
   run(): Promise<unknown>;
+  state: Record<string, unknown>;
 };
 
 export type Flow = {
@@ -46,8 +47,12 @@ export type Project = {
   description: string;
   flows: Flow[];
 };
-
-export type AppNode = BuiltInNode | Node<{ label?: string }, NodeType>;
+// type CustomAppNode = {
+//   id: string;
+//   workflowId: string;
+//   data: NodeData;
+// };
+export type AppNode = BuiltInNode | Node<NodeData, NodeType>;
 
 export type TriggerNode = {
   type: NodeType;
@@ -65,3 +70,8 @@ export enum HistoryAction {
 export type LucideReactIcon = ForwardRefExoticComponent<
   Omit<LucideProps, "ref"> & React.RefAttributes<SVGSVGElement>
 >;
+
+export type DetailsModalProps = {
+  node: Node;
+  setSelectedNode: React.Dispatch<React.SetStateAction<Node>>;
+};

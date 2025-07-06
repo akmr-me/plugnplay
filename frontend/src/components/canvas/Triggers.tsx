@@ -5,6 +5,7 @@ import TriggerNToolsDescription from "./TriggerNToolsDescription";
 import { useState } from "react";
 import { Search } from "lucide-react";
 import { Label } from "../ui/label";
+import { ScrollArea } from "../ui/scroll-area";
 
 type TriggersProps = {
   tools: TriggerNode[];
@@ -40,16 +41,18 @@ export default function Triggers({ tools }: TriggersProps) {
       </div>
       <div />
       {/* Add your components for triggers and tools here */}
-      <div className="flex flex-wrap gap-4">
-        {filteredTools.map((tool) => (
-          <div
-            key={tool.type}
-            className="p-2 border rounded-lg shadow hover:shadow-lg transition-shadow"
-          >
-            <TriggerNToolsDescription {...tool} />
-          </div>
-        ))}
-      </div>
+      <ScrollArea>
+        <div className="flex flex-wrap gap-4">
+          {filteredTools.map((tool) => (
+            <div
+              key={tool.type}
+              className="p-2 border rounded-lg shadow hover:shadow-lg transition-shadow"
+            >
+              <TriggerNToolsDescription {...tool} />
+            </div>
+          ))}
+        </div>
+      </ScrollArea>
       <p className="text-gray-600">
         Drag and drop the components to the canvas to use them in your workflow.
       </p>

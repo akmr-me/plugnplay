@@ -23,16 +23,22 @@ export default function ConditionalNode({
         <Button variant="default" className="w-16 h-16">
           {<IconComponent />}
           <Terminal
-            style={{ right: "0%", top: "70%" }}
+            style={{ right: "0%", top: "90%" }}
             type="source"
             position={Position.Right}
-            id="right"
+            id="right-middle"
+          />
+          <Terminal
+            style={{ right: "0%", top: "45%" }}
+            type="source"
+            position={Position.Right}
+            id="right-bottom"
           />
           <Terminal
             style={{ left: "0%", top: "70%" }}
             type="target"
             position={Position.Left}
-            id="left"
+            id="left-test"
           />
         </Button>
         <p className="absolute text-xs left-1/2 -translate-x-1/2">

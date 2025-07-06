@@ -31,7 +31,7 @@ export default function NodeTooltip({
       <TooltipTrigger>
         {React.cloneElement(children, { ...props })}
       </TooltipTrigger>
-      <TooltipContent>
+      <TooltipContent onClick={(e) => e.stopPropagation()}>
         {
           <Trash
             color="red"

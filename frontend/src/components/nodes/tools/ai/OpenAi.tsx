@@ -27,7 +27,7 @@ export default function OpenAI({ type, data, ...some }: NodeProps<OpenAiNode>) {
             style={{ left: "0%", top: "70%" }}
             type="target"
             position={Position.Left}
-            id="right"
+            id="left"
           />
         </Button>
         <p className="absolute text-xs left-1/2 -translate-x-1/2">Open AI</p>

@@ -6,11 +6,15 @@ import {
   SidebarGroupLabel,
   SidebarMenu,
   SidebarMenuButton,
-  SidebarMenuItem,
-  SidebarMenuSubButton,
+  SidebarMenuSub,
   SidebarMenuSubItem,
 } from "../../ui/sidebar";
 import { ChevronDown, ChevronRight } from "lucide-react";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
 
 export default function ProjectSidebar() {
   const { allProjects, currentFlow, currentProject } = useFlowSelectors();
@@ -23,57 +27,73 @@ export default function ProjectSidebar() {
       // url: `/projects/${project.id}`,
       url: "#",
       items: project.flows.map((flow) => ({
+        ...flow,
         title: flow.name,
         // url: `/projects/${project.id}/flows/${flow.id}`,
         url: "#",
-        isActive: flow.id === currentFlow?.id, // You can set this based on your routing logic
+        isActive: flow.id === currentFlow?.id,
       })),
     }));
   }, [allProjects, currentFlow]);
 
   return (
-    <SidebarGroup key={"Template"}>
-      <SidebarGroupLabel className="text-blue-500 text-lg">
+    <SidebarGroup key={"Templates"}>
+      <SidebarGroupLabel className="sidebar-group-label">
         {"Templates"}
       </SidebarGroupLabel>
       {mappedData.map((project) => (
-        <SidebarGroupContent key={project.title}>
-          <SidebarMenuButton
-            asChild
-            isActive={currentProject?.id === project.id}
-            className="pl-4!"
-          >
-            <>
-              <a
-                href={project.url}
-                className="flex items-center justify-between px-4 font-semibold"
-                onClick={() => {
-                  const newProject =
-                    project.id === currentProject?.id ? null : project;
-                  setCurrentProject(newProject);
-                  setCurrentFlow(null); // Clear current flow when switching projects
-                }}
-              >
-                {project.title}{" "}
-                {currentProject?.id === project.id ? (
-                  <ChevronDown />
-                ) : (
-                  <ChevronRight />
+        <SidebarGroupContent key={project.id + "templates"}>
+          <SidebarMenu>
+            <Collapsible className="group/collapsible">
+              <CollapsibleTrigger asChild>
+                <SidebarMenuButton
+                  isActive={currentProject?.id === project.id}
+                  className="pl-4 flex items-center justify-between cursor-pointer min-w-0"
+                  onClick={() => {
+                    const newProject =
+                      project.id === currentProject?.id ? null : project;
+                    setCurrentProject(newProject);
+                    setCurrentFlow(null);
+                  }}
+                >
+                  <span
+                  // className="truncate overflow-hidden whitespace-nowrap flex-1 mr-2"
+                  // style={{ maxWidth: "120px" }} // Adjust based on your design
+                  >
+                    {project.title}
+                  </span>
+                  {currentProject?.id === project.id ? (
+                    <ChevronDown className="flex-shrink-0" />
+                  ) : (
+                    <ChevronRight className="flex-shrink-0" />
+                  )}
+                </SidebarMenuButton>
+              </CollapsibleTrigger>
+              <CollapsibleContent>
+                {currentProject?.id === project.id && (
+                  <SidebarMenuSub className="">
+                    {project.items.map((flow) => (
+                      <SidebarMenuSubItem
+                        key={flow.id + "templates"}
+                        className="flex items-center justify-between"
+                      >
+                        <>
+                          <span
+                            onClick={() => setCurrentFlow(flow)}
+                            // className="dark:text-gray-500"
+                            className="truncate overflow-hidden whitespace-nowrap flex-1 mr-2 cursor-pointer"
+                            style={{ maxWidth: "120px" }}
+                          >
+                            {flow.title}
+                          </span>
+                        </>
+                      </SidebarMenuSubItem>
+                    ))}
+                  </SidebarMenuSub>
                 )}
-              </a>
-            </>
-          </SidebarMenuButton>
-          {currentProject?.id === project.id && (
-            <SidebarMenu className="pl-4    ">
-              {project.items.map((flow) => (
-                <SidebarMenuSubItem key={flow.title}>
-                  <SidebarMenuSubButton asChild isActive={flow.isActive}>
-                    <a href={flow.url}>{flow.title}</a>
-                  </SidebarMenuSubButton>
-                </SidebarMenuSubItem>
-              ))}
-            </SidebarMenu>
-          )}
+              </CollapsibleContent>
+            </Collapsible>
+          </SidebarMenu>
         </SidebarGroupContent>
       ))}
     </SidebarGroup>

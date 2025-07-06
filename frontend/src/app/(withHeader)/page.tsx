@@ -3,7 +3,7 @@ import FeatureCard from "@/components/landing/FeatureCard";
 import TestimonialCard from "@/components/landing/TestimonialCard";
 import { faqs } from "@/data/faqs";
 import Image from "next/image";
-import logo from "../logo.svg";
+import logo from "../../logo.svg";
 
 export default function Home() {
   return (

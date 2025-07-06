@@ -24,6 +24,7 @@ const initialFlows: Flow[] = [
     description: "This is the initial flow.",
     nodes: initialNodes,
     edges: initialEdges,
+    viewport: { x: 0, y: 0, zoom: 0 },
   },
 ];
 
@@ -80,6 +81,7 @@ export const useFlowStore = create<FlowStore>()(
 
         updateFlow: (flow) => {
           set((state) => {
+            console.log("update flow called", flow);
             const index = state.allProjects.findIndex(
               (p) => p.id === flow.projectId
             );
@@ -91,6 +93,7 @@ export const useFlowStore = create<FlowStore>()(
                 state.allProjects[index].flows[flowIndex] = JSON.parse(
                   JSON.stringify(flow)
                 );
+                state.currentFlow = JSON.parse(JSON.stringify(flow));
               }
             }
           });

@@ -9,16 +9,22 @@ import {
   Hash,
   Type,
   FileText,
-  // CrossIcon,
   XIcon,
+  FormInput,
 } from "lucide-react";
-import { Dialog, DialogPortal } from "@/components/ui/dialog";
-import { DialogContent } from "@radix-ui/react-dialog";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
+import { Textarea } from "@/components/ui/textarea";
+import { Checkbox } from "@/components/ui/checkbox";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Separator } from "@/components/ui/separator";
 import { Node, useReactFlow } from "@xyflow/react";
 import { AppNode, LucideReactIcon } from "@/types";
+import WorkflowJSON from "./WorkflowJSON";
+import DetailsModal from "./Modal";
 
 type FormFieldType = {
   type: ValidField;
@@ -69,9 +75,7 @@ const FormBuilder = ({
     const newField: FieldType = {
       id: Date.now().toString(),
       type,
-      // label: `${type.charAt(0).toUpperCase() + type.slice(1)} Field`,
       required: false,
-      // placeholder: `Enter ${type}...`,
     };
     setFields([...fields, newField]);
   };
@@ -90,11 +94,15 @@ const FormBuilder = ({
     delete newResponses[id];
     setFormResponses(newResponses);
   };
-  console.log({ formDescription, formResponses, fields });
-  const handleFormResponse = (fieldId: string, value: string) => {
+
+  const handleFormResponse = (
+    fieldId: string,
+    value: string,
+    label: string
+  ) => {
     setFormResponses((prev) => ({
       ...prev,
-      [fieldId]: value,
+      [label]: value,
     }));
   };
 
@@ -124,18 +132,21 @@ const FormBuilder = ({
       description: formDescription,
       responses: formResponses,
     });
-    alert("Form submitted successfully!");
+    try {
+      updateNodeData(node.id, { ...node.data, output: formResponses });
+    } catch (error) {
+      console.error(error);
+    }
+    alert("Form submitted successfully!" + node.id);
   };
-
+  console.log("node is updated", node);
   const renderFieldInput = (field: FieldType) => {
     const commonProps = {
-      className:
-        "w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent",
-      placeholder: field.placeholder,
-      value: formResponses[field.id] || "",
+      value: formResponses[field.label as string] || "",
       onChange: (
         e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
-      ) => handleFormResponse(String(field.id), e.target.value),
+      ) => handleFormResponse(String(field.id), e.target.value, field.label!),
+      placeholder: field.placeholder,
     };
 
     switch (field.type) {
@@ -148,13 +159,7 @@ const FormBuilder = ({
       case "date":
         return <Input type="date" {...commonProps} />;
       case "textarea":
-        return (
-          <textarea
-            {...commonProps}
-            rows={4}
-            className={`${commonProps.className} resize-vertical`}
-          />
-        );
+        return <Textarea {...commonProps} rows={4} />;
       default:
         return <Input type="text" {...commonProps} />;
     }
@@ -165,73 +170,96 @@ const FormBuilder = ({
       fieldTypes.find((t) => t.type === field.type)?.icon || Type;
 
     return (
-      <div
-        key={field.id}
-        className="bg-white border border-gray-200 rounded-lg p-4 space-y-3 shadow-sm"
-      >
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-2">
-            <FieldIcon size={16} className="text-gray-500" />
-            <span className="text-sm font-medium text-gray-700 capitalize">
-              {field.type} Field
-            </span>
+      <Card key={field.id} className="w-full">
+        <CardContent className="p-4">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-2">
+              <FieldIcon className="h-4 w-4 text-muted-foreground" />
+              <Badge variant="outline" className="text-xs capitalize">
+                {field.type} Field
+              </Badge>
+            </div>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => deleteField(field.id)}
+              className="text-destructive hover:text-destructive"
+            >
+              <Trash2 className="h-4 w-4" />
+            </Button>
           </div>
-          <Button
-            onClick={() => deleteField(field.id)}
-            className="text-red-500 hover:text-red-700 p-1"
-          >
-            <Trash2 size={16} />
-          </Button>
-        </div>
 
-        <div className="space-y-2 flex gap-2">
-          <Input
-            type="text"
-            value={field.label}
-            onChange={(e) =>
-              updateField(field.id, { label: e.target.value } as FieldType)
-            }
-            className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:text-gray-700"
-            placeholder="Field label"
-          />
+          <div className="space-y-4">
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-2">
+                <Label
+                  htmlFor={`label-${field.id}`}
+                  className="text-sm font-medium"
+                >
+                  Field Label
+                </Label>
+                <Input
+                  id={`label-${field.id}`}
+                  value={field.label || ""}
+                  onChange={(e) =>
+                    updateField(field.id, {
+                      label: e.target.value,
+                    } as FieldType)
+                  }
+                  placeholder="Enter field label"
+                />
+              </div>
 
-          <Input
-            type="text"
-            value={field.placeholder}
-            onChange={(e) =>
-              updateField(field.id, {
-                placeholder: e.target.value,
-              } as FieldType)
-            }
-            className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:text-gray-700"
-            placeholder="Placeholder text"
-          />
+              <div className="space-y-2">
+                <Label
+                  htmlFor={`placeholder-${field.id}`}
+                  className="text-sm font-medium"
+                >
+                  Placeholder
+                </Label>
+                <Input
+                  id={`placeholder-${field.id}`}
+                  value={field.placeholder || ""}
+                  onChange={(e) =>
+                    updateField(field.id, {
+                      placeholder: e.target.value,
+                    } as FieldType)
+                  }
+                  placeholder="Enter placeholder text"
+                />
+              </div>
+            </div>
 
-          <label className="flex items-center text-xs dark:text-gray-700">
-            <Input
-              type="checkbox"
-              checked={field.required}
-              onChange={(e) =>
-                updateField(field.id, {
-                  required: e.target.checked,
-                } as FieldType)
-              }
-              className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-            />
-            <span>Required field</span>
-          </label>
-        </div>
-      </div>
+            <div className="flex items-center space-x-2">
+              <Checkbox
+                id={`required-${field.id}`}
+                checked={field.required}
+                onCheckedChange={(checked) =>
+                  updateField(field.id, {
+                    required: checked as boolean,
+                  } as FieldType)
+                }
+              />
+              <Label
+                htmlFor={`required-${field.id}`}
+                className="text-sm font-medium cursor-pointer"
+              >
+                Required field
+              </Label>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
     );
   };
 
   const renderPreviewField = (field: FieldType) => {
     return (
       <div key={field.id} className="space-y-2">
-        <label className="block text-sm font-medium text-gray-700 dark:text-gray-600">
+        <Label className="text-sm font-medium">
           {field.label}
-          {field.required && <span className="text-red-500 ml-1">*</span>}
-        </label>
+          {field.required && <span className="text-destructive ml-1">*</span>}
+        </Label>
         {renderFieldInput(field)}
       </div>
     );
@@ -246,143 +274,176 @@ const FormBuilder = ({
   };
 
   useEffect(() => {
-    updateNodeData(id, { fields, formDescription, formTitle });
+    updateNodeData(id, {
+      ...node.data,
+      state: { fields, formDescription, formTitle },
+    });
   }, [fields, formDescription, formTitle, id, updateNodeData]);
-
+  console.log("node from flow builder", fields);
   return (
-    <Dialog open>
-      <DialogPortal container={document.getElementById("dialog-portal")}>
-        <DialogContent
-          className="w-[99vw] overflow-x-hidden h-screen flex items-center bg-black/50"
-          onClick={closeDialog}
-        >
-          <ScrollArea
-            className="w-2xl mx-auto p-6 bg-gray-50 h-5/6 rounded-lg bg-gradient-to-r from-orange-500 to-red-600"
-            onClick={(e: React.MouseEvent<HTMLElement>) => e.stopPropagation()}
-          >
-            {/* <div className="w-2xl mx-auto p-6 bg-gray-50 h-5/6"> */}
-            {/* Header */}
-            <div className="bg-white rounded-lg shadow-sm border p-6 mb-6 ">
-              <div className="flex items-center justify-between mb-4">
-                <h1 className="text-2xl font-bold text-gray-800">
+    <DetailsModal setSelectedNode={setSelectedNode}>
+      <WorkflowJSON type="input" node={node} />
+      <ScrollArea
+        className="w-full max-w-xl mx-auto"
+        onClick={(e: React.MouseEvent<HTMLElement>) => e.stopPropagation()}
+      >
+        <div className="p-6 h-[90vh]">
+          <Card className="w-full">
+            <CardHeader className="pb-4">
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-lg font-semibold flex items-center gap-2">
+                  <FormInput className="h-5 w-5" />
                   Form Builder
-                </h1>
-                <div className="flex">
+                </CardTitle>
+                <div className="flex items-center gap-2">
                   <Button
-                    onClick={() => setIsPreviewMode(!isPreviewMode)}
-                    className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+                    onClick={() => {
+                      if (
+                        !isPreviewMode &&
+                        fields.some((field) => !field.label)
+                      ) {
+                        alert("Please give label to all fields!");
+                        return;
+                      }
+                      setIsPreviewMode(!isPreviewMode);
+                    }}
+                    variant="outline"
                     size="sm"
+                    className="flex items-center gap-1"
                   >
-                    {isPreviewMode ? <Edit3 size={16} /> : <Eye size={16} />}
+                    {isPreviewMode ? (
+                      <Edit3 className="h-3 w-3" />
+                    ) : (
+                      <Eye className="h-3 w-3" />
+                    )}
                     <span>{isPreviewMode ? "Edit" : "Preview"}</span>
                   </Button>
                   <Button
                     variant="ghost"
-                    size="icon"
-                    className="text-red-600 cursor-pointer text-2xl"
-                    title="Close"
+                    size="sm"
                     onClick={closeDialog}
+                    className="text-destructive hover:text-destructive"
                   >
-                    <XIcon />
+                    <XIcon className="h-4 w-4" />
                   </Button>
                 </div>
               </div>
+            </CardHeader>
 
-              {!isPreviewMode ? (
-                <div className="space-y-4">
-                  <Input
-                    type="text"
-                    value={formTitle}
-                    onChange={(e) => setFormTitle(e.target.value)}
-                    className="w-full text-xl font-semibold border-none outline-none focus:ring-2 focus:ring-blue-500 rounded-md px-2 py-1 text-gray-600"
-                    placeholder="Form Title"
-                  />
-                  <textarea
-                    value={formDescription}
-                    onChange={(e) => setFormDescription(e.target.value)}
-                    className="w-full text-gray-600 border-none outline-none focus:ring-2 focus:ring-blue-500 rounded-md px-2 py-1 resize-none"
-                    placeholder="Form Description (optional)"
-                    rows={2}
-                  />
-                </div>
-              ) : (
-                <div>
-                  <h2 className="text-xl font-semibold text-gray-800 mb-2">
-                    {formTitle}
-                  </h2>
-                  {formDescription && (
-                    <p className="text-gray-600">{formDescription}</p>
-                  )}
-                </div>
-              )}
-            </div>
-
-            {/* Form Builder/Preview Content */}
-            {!isPreviewMode ? (
-              <div className="space-y-6">
-                {/* Field Type Selector */}
-                <div className="bg-white rounded-lg border p-4 shadow-sm">
-                  <h3 className="text-lg font-medium text-gray-800 mb-3">
-                    Add Field
-                  </h3>
-                  <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
-                    {fieldTypes.map(({ type, label, icon: Icon }) => (
-                      <Button
-                        key={type}
-                        onClick={() => addField(type)}
-                        className="flex items-center space-y-2 p-3 border border-gray-200 rounded-lg hover:border-blue-500 hover:bg-blue-50 transition-colors hover:text-gray-700"
+            <CardContent className="space-y-6">
+              {/* Form Title and Description */}
+              <div className="space-y-4">
+                {!isPreviewMode ? (
+                  <>
+                    <div className="space-y-2">
+                      <Label
+                        htmlFor="form-title"
+                        className="text-sm font-medium"
                       >
-                        <Icon size={20} className="m-0" />
-                        <span className="text-sm font-medium">{label}</span>
-                      </Button>
-                    ))}
+                        Form Title
+                      </Label>
+                      <Input
+                        id="form-title"
+                        value={formTitle}
+                        onChange={(e) => setFormTitle(e.target.value)}
+                        placeholder="Enter form title"
+                        className="text-lg font-semibold"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label
+                        htmlFor="form-description"
+                        className="text-sm font-medium"
+                      >
+                        Form Description (Optional)
+                      </Label>
+                      <Textarea
+                        id="form-description"
+                        value={formDescription}
+                        onChange={(e) => setFormDescription(e.target.value)}
+                        placeholder="Enter form description"
+                        rows={2}
+                      />
+                    </div>
+                  </>
+                ) : (
+                  <div className="space-y-2">
+                    <h2 className="text-xl font-semibold">{formTitle}</h2>
+                    {formDescription && (
+                      <p className="text-muted-foreground">{formDescription}</p>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              <Separator />
+
+              {/* Form Builder/Preview Content */}
+              {!isPreviewMode ? (
+                <div className="space-y-6">
+                  {/* Field Type Selector */}
+                  <div className="space-y-3">
+                    <Label className="text-sm font-medium">Add Field</Label>
+                    <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
+                      {fieldTypes.map(({ type, label, icon: Icon }) => (
+                        <Button
+                          key={type}
+                          onClick={() => addField(type)}
+                          variant="outline"
+                          className="flex flex-col items-center gap-2 h-auto p-3 hover:bg-primary/5"
+                        >
+                          <Icon className="h-4 w-4" />
+                          <span className="text-xs font-medium">{label}</span>
+                        </Button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Field Editors */}
+                  <div className="space-y-4">
+                    {fields.length === 0 ? (
+                      <Card className="border-dashed">
+                        <CardContent className="flex flex-col items-center justify-center py-8">
+                          <Plus className="h-8 w-8 text-muted-foreground mb-2" />
+                          <p className="text-muted-foreground text-center">
+                            No fields added yet. Choose a field type above to
+                            get started.
+                          </p>
+                        </CardContent>
+                      </Card>
+                    ) : (
+                      fields.map(renderFieldEditor)
+                    )}
                   </div>
                 </div>
-
-                {/* Field Editors */}
-                <div className="space-y-4">
-                  {fields.length === 0 ? (
-                    <div className="bg-white border-2 border-dashed border-gray-300 rounded-lg p-8 text-center">
-                      <Plus size={32} className="text-gray-400 mx-auto mb-2" />
-                      <p className="text-gray-500">
-                        No fields added yet. Choose a field type above to get
-                        started.
-                      </p>
-                    </div>
-                  ) : (
-                    fields.map(renderFieldEditor)
-                  )}
-                </div>
-              </div>
-            ) : (
-              /* Preview Mode */
-              <div className="bg-white rounded-lg border shadow-sm p-6">
+              ) : (
+                /* Preview Mode */
                 <div className="space-y-6">
                   {fields.length === 0 ? (
-                    <p className="text-gray-500 text-center py-8">
+                    <p className="text-muted-foreground text-center py-8">
                       No fields to display. Switch to edit mode to add fields.
                     </p>
                   ) : (
                     <>
-                      {fields.map(renderPreviewField)}
-                      <div className="pt-4 border-t">
-                        <Button
-                          onClick={handleSubmit}
-                          className="w-full md:w-auto px-6 py-3 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors font-medium"
-                        >
+                      <div className="space-y-4">
+                        {fields.map(renderPreviewField)}
+                      </div>
+                      <Separator />
+                      <div className="flex justify-end">
+                        <Button onClick={handleSubmit} className="px-8">
                           Submit Form
                         </Button>
                       </div>
                     </>
                   )}
                 </div>
-              </div>
-            )}
-            {/* </div> */}
-          </ScrollArea>
-        </DialogContent>
-      </DialogPortal>
-    </Dialog>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+      </ScrollArea>
+      <WorkflowJSON node={node} type="output" />
+    </DetailsModal>
   );
 };
 

@@ -1,11 +1,13 @@
 import React, { useState, useRef, useEffect } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { Send, MessageCircle, X, Minimize2 } from "lucide-react";
-import { AppNode } from "@/types";
-import { useReactFlow } from "@xyflow/react";
 
-const ChatBox = ({ node }: { node: AppNode }) => {
+const ChatBox = ({ node = { data: {}, id: "chat-1" } }) => {
   const { data, id } = node;
-  const { updateNodeData } = useReactFlow();
   const [isOpen, setIsOpen] = useState(true);
   const [isMinimized, setIsMinimized] = useState(false);
   const [messages, setMessages] = useState(
@@ -27,7 +29,6 @@ const ChatBox = ({ node }: { node: AppNode }) => {
 
   useEffect(() => {
     scrollToBottom();
-    updateNodeData(id, { messages });
   }, [messages]);
 
   const handleSendMessage = (e) => {
@@ -56,60 +57,57 @@ const ChatBox = ({ node }: { node: AppNode }) => {
     }, 1000);
   };
 
-  const formatTime = (date: Date) => {
-    console.log("date", date);
+  const formatTime = (date) => {
     return new Date(date)?.toLocaleTimeString([], {
       hour: "2-digit",
       minute: "2-digit",
     });
   };
 
-  if (!isOpen) {
-    return (
-      <div className="fixed bottom-4 left-4 z-50">
-        <button
-          onClick={() => setIsOpen(true)}
-          className="bg-blue-600 hover:bg-blue-700 text-white rounded-full p-4 shadow-lg transition-all duration-200 hover:scale-105"
-        >
-          <MessageCircle size={24} />
-        </button>
-      </div>
-    );
-  }
+  if (!isOpen) return null;
 
   return (
     <div className="fixed bottom-4 left-4 z-50">
-      <div
-        className={`bg-white rounded-lg shadow-2xl border transition-all duration-300 ${
-          isMinimized ? "w-80 h-14" : "w-80 h-96"
+      <Card
+        className={`gap-2 shadow-2xl transition-all duration-300 ${
+          isMinimized ? "w-80 h-14" : "w-80 h-80"
         }`}
       >
         {/* Header */}
-        <div className="bg-blue-600 text-white p-4 rounded-t-lg flex items-center justify-between">
-          <div className="flex items-center space-x-2">
-            <MessageCircle size={20} />
-            <h3 className="font-semibold">AI Agent</h3>
+        <CardHeader className="">
+          <div className="flex items-center justify-between">
+            <CardTitle className="text-lg font-semibold flex items-center gap-2">
+              <MessageCircle className="h-5 w-5" />
+              AI Agent
+            </CardTitle>
+            <div className="flex items-center gap-2">
+              <Badge variant="outline" className="text-xs">
+                Online
+              </Badge>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setIsMinimized(!isMinimized)}
+                className="h-6 w-6 p-0"
+              >
+                <Minimize2 className="h-3 w-3" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setIsOpen(false)}
+                className="h-6 w-6 p-0"
+              >
+                <X className="h-3 w-3" />
+              </Button>
+            </div>
           </div>
-          <div className="flex items-center space-x-2">
-            <button
-              onClick={() => setIsMinimized(!isMinimized)}
-              className="hover:bg-blue-700 rounded p-1 transition-colors"
-            >
-              <Minimize2 size={16} />
-            </button>
-            <button
-              onClick={() => setIsOpen(false)}
-              className="hover:bg-blue-700 rounded p-1 transition-colors"
-            >
-              <X size={16} />
-            </button>
-          </div>
-        </div>
+        </CardHeader>
 
         {!isMinimized && (
-          <>
+          <CardContent className="p-0 flex flex-col h-44">
             {/* Messages Area */}
-            <div className="flex-1 p-4 h-64 overflow-y-auto bg-gray-50">
+            <ScrollArea className="flex-1 p-4 bg-muted h-44 min-h-48">
               <div className="space-y-3">
                 {messages.map((message) => (
                   <div
@@ -123,18 +121,12 @@ const ChatBox = ({ node }: { node: AppNode }) => {
                     <div
                       className={`max-w-xs px-3 py-2 rounded-lg text-sm ${
                         message.sender === "user"
-                          ? "bg-blue-600 text-white rounded-br-none"
-                          : "bg-white text-gray-800 border rounded-bl-none shadow-sm"
+                          ? "bg-primary text-primary-foreground rounded-br-none"
+                          : "bg-background text-foreground border rounded-bl-none shadow-sm"
                       }`}
                     >
                       <p>{message.text}</p>
-                      <p
-                        className={`text-xs mt-1 ${
-                          message.sender === "user"
-                            ? "text-blue-100"
-                            : "text-gray-500"
-                        }`}
-                      >
+                      <p className="text-xs mt-1 opacity-70">
                         {formatTime(message.timestamp)}
                       </p>
                     </div>
@@ -142,12 +134,12 @@ const ChatBox = ({ node }: { node: AppNode }) => {
                 ))}
                 <div ref={messagesEndRef} />
               </div>
-            </div>
+            </ScrollArea>
 
             {/* Input Area */}
             <div className="border-t p-3">
               <div className="flex space-x-2">
-                <input
+                <Input
                   type="text"
                   value={inputValue}
                   onChange={(e) => setInputValue(e.target.value)}
@@ -157,20 +149,21 @@ const ChatBox = ({ node }: { node: AppNode }) => {
                     }
                   }}
                   placeholder="Type your message..."
-                  className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:text-black"
+                  className="flex-1 text-sm"
                 />
-                <button
+                <Button
                   onClick={handleSendMessage}
                   disabled={!inputValue.trim()}
-                  className="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-white rounded-lg p-2 transition-colors"
+                  size="sm"
+                  className="px-3"
                 >
-                  <Send size={16} />
-                </button>
+                  <Send className="h-3 w-3" />
+                </Button>
               </div>
             </div>
-          </>
+          </CardContent>
         )}
-      </div>
+      </Card>
     </div>
   );
 };

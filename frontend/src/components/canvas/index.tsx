@@ -1,4 +1,5 @@
 "use client";
+
 import { AppSidebar } from "@/components/app-sidebar";
 import {
   Breadcrumb,
@@ -20,12 +21,11 @@ import PlayNPublishButtonGroup from "./PlayNPublishButtonGroup";
 import CreateProject from "./sidebar/CreateProject";
 
 export default function Canvas() {
-  const { allProjects, currentFlow, currentProject } = useFlowSelectors();
-  console.log("all project state:", allProjects, currentFlow, currentProject);
+  const { currentFlow, currentProject } = useFlowSelectors();
 
   return (
     <SidebarProvider>
-      <AppSidebar className="top-16 border-t-2" />
+      <AppSidebar className="border-t-2" />
       <SidebarInset>
         {/* <div className="h-16" /> */}
         <header className="flex h-11 shrink-0 items-center gap-2 border-b px-4">

@@ -1,16 +1,13 @@
-import { useFlowActions, useFlowSelectors } from "@/stores";
 import React from "react";
 import {
   SidebarGroup,
   SidebarGroupContent,
   SidebarGroupLabel,
   SidebarMenu,
-  SidebarMenuButton,
-  SidebarMenuItem,
   SidebarMenuSubButton,
   SidebarMenuSubItem,
 } from "../../ui/sidebar";
-import { Palette, Save, Settings } from "lucide-react";
+import { Settings } from "lucide-react";
 import Command from "@/components/Icons/Command";
 import Ctrl from "@/components/Icons/Ctrl";
 import { Switch } from "@/components/ui/switch";
@@ -43,7 +40,7 @@ const SettingsItems = {
 export default function SettingsSidebar() {
   return (
     <SidebarGroup key={"Settings"} className="mt-4">
-      <SidebarGroupLabel className="text-orange-500 text-lg flex justify-between">
+      <SidebarGroupLabel className="sidebar-group-label flex justify-between">
         {"Settings"} <Settings />
       </SidebarGroupLabel>
       <SidebarGroupContent>
@@ -55,7 +52,8 @@ export default function SettingsSidebar() {
                   href="#"
                   className="flex items-center justify-between px-4 bg-transparent!"
                 >
-                  {setting} {SettingsItems[setting]}
+                  {setting}{" "}
+                  {SettingsItems[setting as keyof typeof SettingsItems]}
                 </a>
               </SidebarMenuSubButton>
             </SidebarMenuSubItem>

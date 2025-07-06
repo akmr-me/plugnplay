@@ -41,8 +41,8 @@ export const isPointInBox = (
 export function createNode(
   type: string,
   workflowId: string,
-  position: { x: number; y: number },
-  data: Record<string, any> = {}
+  position: { x: number; y: number }
+  // data: Record<string, any> = {}
   // ...restNodeProperties: any[]
 ) {
   return {
@@ -50,12 +50,16 @@ export function createNode(
     id: "node_" + uuid(),
     type,
     position,
-    data,
+    data: { inputs: [], output: {}, state: {}, run: () => {} },
     workflowId,
   };
 }
 
-export function createEdge(data, connection: Connection, type = "edge") {
+export function createEdge(
+  data: Record<string, unknown>,
+  connection: Connection,
+  type = "edge"
+) {
   return {
     ...connection,
     id: "edge_" + uuid(),

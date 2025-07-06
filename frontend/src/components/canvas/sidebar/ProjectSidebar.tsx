@@ -6,15 +6,18 @@ import {
   SidebarGroupLabel,
   SidebarMenu,
   SidebarMenuButton,
-  SidebarMenuItem,
-  SidebarMenuSubButton,
+  SidebarMenuSub,
   SidebarMenuSubItem,
 } from "../../ui/sidebar";
 import { ChevronDown, ChevronRight, Trash } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import { createNewFlow } from "@/lib/flow";
 import CreateProject from "./CreateProject";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
 
 export default function ProjectSidebar() {
   const { allProjects, currentFlow, currentProject } = useFlowSelectors();
@@ -52,91 +55,97 @@ export default function ProjectSidebar() {
   console.log({ currentFlow });
   return (
     <SidebarGroup key={"Project"}>
-      <SidebarGroupLabel className="text-blue-500 text-lg">
+      <SidebarGroupLabel className="sidebar-group-label">
         {"Projects"}
       </SidebarGroupLabel>
       {mappedData.map((project) => (
-        <SidebarGroupContent key={project.id}>
-          <SidebarMenuButton
-            asChild
-            isActive={currentProject?.id === project.id}
-            className="pl-4!"
-          >
-            <>
-              <a
-                href={project.url}
-                className="flex items-center justify-between px-4 font-semibold text-ellipsis overflow-hidden whitespace-nowrap"
-                onClick={() => {
-                  const newProject =
-                    project.id === currentProject?.id ? null : project;
-                  setCurrentProject(newProject);
-                  setCurrentFlow(null); // Clear current flow when switching projects
-                }}
-              >
-                {project.title}{" "}
-                {currentProject?.id === project.id ? (
-                  <ChevronDown />
-                ) : (
-                  <ChevronRight />
-                )}
-              </a>
-            </>
-          </SidebarMenuButton>
-          {currentProject?.id === project.id && (
-            <SidebarMenu className="px-2 bg-amber-50 m-auto w-[80%]">
-              <div className="flex justify-between">
-                <CreateProject
-                  isCreateProject={false}
-                  projectName={project.title}
-                  projectId={project.id}
-                  key={project.id}
-                />
-                {project.items.length === 0 && (
-                  <>
-                    <Separator
-                      orientation="vertical"
-                      className="my-2 text-black h-4 w-1"
-                    />
-                    <Button
-                      size="sm"
-                      variant="link"
-                      className="text-xs text-red-400 p-0"
-                      onClick={() => {
-                        deleteProject(project.id);
-                        setCurrentProject(null);
-                      }}
-                    >
-                      Delete Project
-                    </Button>
-                  </>
-                )}
-              </div>
-              {project.items.map((flow) => (
-                <SidebarMenuSubItem
-                  key={flow.id}
-                  className="flex items-center justify-between"
+        <SidebarGroupContent key={project.id + "project"}>
+          <SidebarMenu>
+            <Collapsible className="group/collapsible">
+              <CollapsibleTrigger asChild>
+                <SidebarMenuButton
+                  isActive={currentProject?.id === project.id}
+                  className="pl-4 flex items-center justify-between cursor-pointer min-w-0"
+                  onClick={() => {
+                    const newProject =
+                      project.id === currentProject?.id ? null : project;
+                    setCurrentProject(newProject);
+                    setCurrentFlow(null);
+                  }}
                 >
-                  <SidebarMenuSubButton asChild isActive={flow.isActive}>
-                    <>
-                      <a
-                        href={flow.url}
-                        onClick={() => setCurrentFlow(flow)}
-                        className="dark:text-gray-500"
-                      >
-                        {flow.title}
-                      </a>
-                      <Trash
-                        color="red"
-                        className="cursor-pointer"
-                        size={16}
-                        onClick={() => handleDeleteFlow(project.id, flow.id)}
+                  <span
+                    className="truncate overflow-hidden whitespace-nowrap flex-1 mr-2 cursor-pointer"
+                    // style={{ maxWidth: "120px" }} // Adjust based on your design
+                  >
+                    {project.title}
+                  </span>
+                  {currentProject?.id === project.id ? (
+                    <ChevronDown className="flex-shrink-0" />
+                  ) : (
+                    <ChevronRight className="flex-shrink-0" />
+                  )}
+                </SidebarMenuButton>
+              </CollapsibleTrigger>
+              <CollapsibleContent>
+                {currentProject?.id === project.id && (
+                  <SidebarMenuSub className="" key={"project" + project.id}>
+                    <div className="flex justify-between">
+                      <CreateProject
+                        isCreateProject={false}
+                        projectName={project.title}
+                        projectId={project.id}
+                        key={project.id}
                       />
-                    </>
-                  </SidebarMenuSubButton>
-                </SidebarMenuSubItem>
-              ))}
-            </SidebarMenu>
-          )}
+                      {project.items.length === 0 && (
+                        <>
+                          <Separator
+                            orientation="vertical"
+                            className="my-2 text-black h-4 w-1"
+                          />
+                          <Button
+                            size="sm"
+                            variant="link"
+                            className="text-xs text-red-400 p-0"
+                            onClick={() => {
+                              deleteProject(project.id);
+                              setCurrentProject(null);
+                            }}
+                          >
+                            Delete Project
+                          </Button>
+                        </>
+                      )}
+                    </div>
+                    {project.items.map((flow) => (
+                      <SidebarMenuSubItem
+                        key={flow.id + "project"}
+                        className="flex items-center justify-between"
+                      >
+                        <>
+                          <span
+                            onClick={() => setCurrentFlow(flow)}
+                            // className="dark:text-gray-500"
+                            className="truncate overflow-hidden whitespace-nowrap flex-1 mr-2 cursor-pointer"
+                            style={{ maxWidth: "120px" }}
+                          >
+                            {flow.title}
+                          </span>
+                          <Trash
+                            color="red"
+                            className="cursor-pointer"
+                            size={16}
+                            onClick={() =>
+                              handleDeleteFlow(project.id, flow.id)
+                            }
+                          />
+                        </>
+                      </SidebarMenuSubItem>
+                    ))}
+                  </SidebarMenuSub>
+                )}
+              </CollapsibleContent>
+            </Collapsible>
+          </SidebarMenu>
         </SidebarGroupContent>
       ))}
     </SidebarGroup>

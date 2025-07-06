@@ -5,8 +5,8 @@ import {
   Controls,
   MiniMap,
   ReactFlow,
-  addEdge,
-  type OnConnect,
+  // addEdge,
+  // type OnConnect,
   useEdgesState,
   useNodesState,
   Connection,
@@ -15,7 +15,7 @@ import {
   Panel,
   useReactFlow,
   OnNodeDrag,
-  ReactFlowInstance,
+  useViewport,
 } from "@xyflow/react";
 
 import "@xyflow/react/dist/style.css";
@@ -35,9 +35,15 @@ import {
 import { createEdge, createNode, isPointInBox } from "@/lib/flow";
 import useHistory from "@/hooks/useHistory";
 import Tools from "./Tools";
-import ChatBox from "../nodes/details/ChatBBox";
+import ChatBox from "../nodes/details/ChatBox";
 import FormBuilder from "../nodes/details/FormBuilder";
 import useKeyBindings from "@/hooks/useKeyBindings";
+import Webhook from "../nodes/details/Webhook";
+import ScheduleDetails from "../nodes/details/Schedule";
+import HttpRequestDetals from "../nodes/details/HTTPRequests";
+import JavascriptEditorDetails from "../nodes/details/JavascriptEditor";
+import IfConditionDetails from "../nodes/details/IfCondition";
+import GmailDetails from "../nodes/details/Gmail";
 
 export default function Flow() {
   const [selectedNode, setSelectedNode] = useState<
@@ -45,8 +51,8 @@ export default function Flow() {
   >();
   const [nodeDropped, setNodeDropped] = useState(false);
   const { theme } = useTheme();
-  const { currentProject, currentFlow, draggingNodeType } = useFlowSelectors();
-  const { addNodeToFlow, addEdgeToFlow } = useFlowActions();
+  const { currentFlow, draggingNodeType } = useFlowSelectors();
+  const { addEdgeToFlow, updateFlow } = useFlowActions();
   const { addNode, addEdge } = useHistory();
   const [nodes, setNodes, onNodesChange] = useNodesState(
     currentFlow?.nodes || []
@@ -54,30 +60,26 @@ export default function Flow() {
   const [edges, setEdges, onEdgesChange] = useEdgesState(
     currentFlow?.edges || []
   );
-  const { autoSave, showMiniMap, showPanel } = useSettingsSelectors();
+  const viewport = useViewport();
+  const { showMiniMap, showPanel } = useSettingsSelectors();
   const { updateSettings } = useSettingsActions();
-  const { screenToFlowPosition, getIntersectingNodes } = useReactFlow();
+  const { screenToFlowPosition, getIntersectingNodes, viewportInitialized } =
+    useReactFlow();
   const overlappingNodeRef = useRef<Node | null>(null);
   const draggedNode = useRef<Node | null>(null);
-  const [workflow, setWorkflow] = useState<ReactFlowInstance<
-    AppNode,
-    Edge
-  > | null>(null);
+
   useKeyBindings();
-  // const onConnect: OnConnect = useCallback(
-  //   (connection) => setEdges((edges) => addEdge(connection, edges)),
-  //   [setEdges]
-  // );
-  console.log({ workflow });
+
   const onConnect = useCallback(
     (connection: Connection) => {
-      // Creaate Edge
+      // Create Edge
       const data = { activate: true };
       const newEdge = createEdge(data, connection);
       addEdge(newEdge);
     },
     [addEdge]
   );
+
   const isValidConnection = (connection: Edge | Connection) => {
     console.log({ connection });
     const { source, target } = connection;
@@ -87,14 +89,12 @@ export default function Flow() {
   };
 
   const onNodeClick = (event: React.MouseEvent<Element>, node: AppNode) => {
-    console.log("node clicked", node);
     setSelectedNode(node);
     if (node.type === NodeType.NewFlow && !showPanel) {
       updateSettings({ showPanel: !showPanel });
     }
   };
   const onPaneClick = () => {
-    console.log("pan cliced");
     setSelectedNode(undefined);
   };
   const isDark = theme === "dark";
@@ -136,31 +136,38 @@ export default function Flow() {
       position = { x: dragX - x, y: dragY - y };
     }
 
-    const node: Node = createNode(type, currentFlow?.id || "", position, {});
+    const node: AppNode = createNode(type, currentFlow?.id || "", position);
     if (node) {
       addNode(node);
     }
   };
-  console.log("nodes", nodes);
-  console.log("edges", edges);
+
   useEffect(() => {
     if (nodes.length === 0) addNode(startNode);
-    else addNodeToFlow(nodes);
-  }, [nodes.length, nodes?.[0]?.type, nodeDropped]);
+    else {
+      // const { nodes = [], edges = [] } = workflow?.toObject() || {};
+      console.log("nodes", nodes);
+      // const viewport = getViewport();
+      console.log("viewport to save", viewport);
+
+      updateFlow({ ...currentFlow, nodes, edges });
+    }
+  }, [nodes.length, nodes?.[0]?.type, nodeDropped, selectedNode]);
 
   // Save Edge
 
   useEffect(() => {
-    addEdgeToFlow(edges);
+    updateFlow({ ...currentFlow, nodes, edges });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [edges.length, addEdgeToFlow]);
+  }, [edges.length, addEdgeToFlow, selectedNode]);
 
-  useEffect(() => {
-    if (currentFlow?.nodes) {
-      setNodes(currentFlow.nodes);
-      setEdges(currentFlow.edges);
-    }
-  }, [currentFlow?.name]);
+  // useEffect(() => {
+  //   if (currentFlow?.nodes) {
+  //     setNodes(currentFlow.nodes);
+  //     setEdges(currentFlow.edges);
+  //     setViewport(currentFlow.viewport);
+  //   }
+  // }, [currentFlow?.name]);
 
   // Update Position
 
@@ -169,7 +176,6 @@ export default function Flow() {
     const overlappingNode = getIntersectingNodes(dragNode)?.[0];
     overlappingNodeRef.current = overlappingNode;
   };
-
   const onNodeDragStop: OnNodeDrag = (evt, dragNode) => {
     setNodeDropped((prev) => !prev);
     if (overlappingNodeRef.current) {
@@ -194,41 +200,86 @@ export default function Flow() {
       });
     }
   };
-  console.log(workflow?.toObject());
+  // console.log(workflow?.toObject());
   const onNodeDragStart = (evt, dragNode) => {
     draggedNode.current = dragNode;
   };
+  // const viewport = getViewport();
+  console.log("viewport", viewport);
+
   const shouldShowTools =
     nodes.length >= 1 && nodes.some((n) => n.type !== NodeType.NewFlow);
   const NInputComponent = selectedNode
     ? NodeInputComponent[selectedNode.type]
     : null;
-  const handleNodeChange = (...rest) => {
-    console.log("node touched");
-    onNodesChange(...rest);
+
+  useEffect(() => {
+    console.log(
+      "current flow from effect",
+      currentFlow,
+      currentFlow?.viewport,
+      viewportInitialized,
+      viewport
+    );
+    if (viewportInitialized) {
+      console.log(
+        "viewportInitializedviewportInitialized",
+        viewportInitialized
+      );
+      // const { x = 0, y = 0, zoom = 1 } = currentFlow?.viewport || {};
+      // setViewport({ x, y, zoom });
+      updateFlow({ ...currentFlow, viewport });
+      // setViewport(currentFlow?.viewport);
+    }
+  }, [viewport]);
+  const handleEdgeChange = (e, edgeProp) => {
+    setEdges((edges) =>
+      edges.map((edge) => {
+        if (edge.id === edgeProp.id) {
+          return { ...edge, style: { stroke: "green" }, selected: true };
+        } else {
+          return edge;
+        }
+      })
+    );
+  };
+
+  const handleEdgeMouseLeave = (e, edge) => {
+    setEdges((edges) =>
+      edges.map((edg) => {
+        if (edg.id === edge.id) {
+          return { ...edg, style: { stroke: "red" }, selected: false };
+        } else {
+          return edg;
+        }
+      })
+    );
   };
   return (
     <div
-      className="w-full h-h-[calc(100vh-6.75rem)] min-h-[calc(100vh-6.75rem)]"
+      className="w-full h-h-[calc(100vh-2.75rem)] min-h-[calc(100vh-2.75rem)]"
       // onKeyDown={handleKeyDown}
     >
       <ReactFlow
-        onInit={setWorkflow}
+        // onInit={setReactFlowInstance}
         nodes={nodes}
         key={currentFlow?.name}
         nodeTypes={nodeTypes}
-        onNodesChange={handleNodeChange}
+        onNodesChange={onNodesChange}
         edges={edges}
         edgeTypes={edgeTypes}
         onEdgesChange={onEdgesChange}
         onConnect={onConnect}
-        fitView
+        // fitView
+        onEdgeMouseEnter={(e, edge) => handleEdgeChange(e, edge)}
+        onEdgeMouseLeave={(e, edge) => handleEdgeMouseLeave(e, edge)}
         connectionLineComponent={ConnectionLine}
         isValidConnection={isValidConnection}
         onDragOver={handleDragOver}
         onDrop={handleDrop}
         onNodeClick={onNodeClick}
         onPaneClick={onPaneClick}
+        defaultViewport={currentFlow?.viewport}
         // onReconnectStart={onReconnectStart}
         // onReconnect={onReconnect}
         // onReconnectEnd={onReconnectEnd}
@@ -237,6 +288,9 @@ export default function Flow() {
         onNodeDragStop={onNodeDragStop}
         onNodeDragStart={onNodeDragStart}
         colorMode={theme as ColorMode}
+        onDelete={(...e) => {
+          console.log("onnode", e);
+        }}
       >
         <Panel
           position="top-right"
@@ -245,7 +299,7 @@ export default function Flow() {
             padding: 12,
             borderRadius: 12,
             background: isDark ? "black" : "white",
-            width: "25%",
+            width: "24rem",
             visibility: showPanel ? "visible" : "hidden",
           }}
         >
@@ -280,4 +334,10 @@ export default function Flow() {
 const NodeInputComponent = {
   [NodeType.OpenAITools]: ChatBox,
   [NodeType.FormTrigger]: FormBuilder,
+  [NodeType.WebhookTrigger]: Webhook,
+  [NodeType.ScheduleTrigger]: ScheduleDetails,
+  [NodeType.HttpProgrammingTools]: HttpRequestDetals,
+  [NodeType.JavaScriptProgrammingTools]: JavascriptEditorDetails,
+  [NodeType.ConditionalOtherTools]: IfConditionDetails,
+  [NodeType.MailOtherTools]: GmailDetails,
 };
