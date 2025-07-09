@@ -139,13 +139,14 @@ export const useFlowStore = create<FlowStore>()(
 
         addProject: (project) => {
           set((state) => {
-            state.allProjects.push(JSON.parse(JSON.stringify(project)));
-            state.currentProject = JSON.parse(JSON.stringify(project));
-            if (project.flows.length) {
-              state.currentFlow = JSON.parse(
-                JSON.stringify(project.flows?.[0])
-              );
-            }
+            state.allProjects = JSON.parse(JSON.stringify(project));
+            // state.allProjects.push(JSON.parse(JSON.stringify(project)));
+            // state.currentProject = JSON.parse(JSON.stringify(project));
+            // if (project.flows.length) {
+            //   state.currentFlow = JSON.parse(
+            //     JSON.stringify(project.flows?.[0])
+            //   );
+            // }
           });
         },
 

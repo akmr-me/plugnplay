@@ -15,7 +15,7 @@ import CreateProject from "./canvas/sidebar/CreateProject";
 
 const AppSidebarItems = {
   Projects: ProjectSidebar,
-  Templates: TemplateSidebar,
+  // Templates: TemplateSidebar,
   Settings: SettingsSidebar,
   Controls: "Controls",
   Help: "Help",

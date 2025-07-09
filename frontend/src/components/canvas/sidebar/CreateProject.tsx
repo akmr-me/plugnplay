@@ -11,9 +11,15 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { createNewFlow, createNewProject } from "@/lib/flow";
+import { createNewFlow } from "@/lib/flow";
+import {
+  createNewProject,
+  createNewWorkflow,
+  fetchAllProjects,
+} from "@/service/flow";
 import { useFlowActions, useFlowSelectors } from "@/stores";
 import { Flow, Project } from "@/types";
+import { useAuth, useUser } from "@clerk/nextjs";
 import { useState } from "react";
 
 type CreateProjectProps = {
@@ -30,11 +36,13 @@ export default function CreateProject({
   const [projectName, setProjectName] = useState(projectNameProp || "");
   const [workflowName, setWorkflowName] = useState("");
   const [open, setOpen] = useState(false);
+  const { getToken } = useAuth();
+  const { user } = useUser();
 
-  const { addProject, addFlow } = useFlowActions();
+  const { addProject, addFlow,setCurrentFlow,setCurrentProject } = useFlowActions();
   const { allProjects } = useFlowSelectors();
 
-  const handleCreateNewProject = () => {
+  const handleCreateNewProject = async () => {
     if (!projectName) return;
     if (
       projectName.length < 3 ||
@@ -54,29 +62,53 @@ export default function CreateProject({
       alert("Project with this name already exists.");
       return;
     }
-    const newProject: Project = createNewProject(projectName);
-
+    const token = await getToken();
+    if (!token || !user?.id) return;
+    const newProject: Project = await createNewProject(
+      token,
+      projectName,
+      user?.id
+    );
+    console.log("created project", newProject);
     if (workflowName) {
-      const newWorkflow: Flow = createNewFlow(workflowName, newProject.id);
-      newProject.flows.push(newWorkflow);
+      const newWorkflow: Flow = await createNewWorkflow(
+        token,
+        workflowName,
+        user.id,
+        newProject.id
+      );
+      // newProject.flows.push(newWorkflow);
+      console.log("create new workflow", newWorkflow);
+      setCurrentFlow(newWorkflow)
     }
     setWorkflowName("");
-    addProject(newProject);
+    const projects = await fetchAllProjects(token, user?.id);
+    console.log({ projects });
+    addProject(projects?.data);
+    setCurrentFlow(newProject)
     setOpen(false);
   };
 
-  const handleAddFlow = () => {
+console.log({allProjects}) 
+
+
+  const handleAddFlow = async () => {
     if (!projectName || !workflowName) return;
     if (
       workflowName.length < 3 ||
-      workflowName.length > 20 ||
-      allProjects.length >= 5
+      workflowName.length > 20 
     ) {
       alert("Workflow name must be between 3 and 20 characters.");
       return;
     }
-    const newFlow: Flow = createNewFlow(workflowName, projectId);
+
+    const token = await getToken();
+    if (!token || !user?.id || !projectId) return;
+
+    const newFlow = await createNewWorkflow(token,workflowName,user?.id,projectId)
+    console.log('workflow',newFlow)
     addFlow(newFlow);
+    // setCurrentFlow(newFlow)
     setWorkflowName("");
     setOpen(false);
   };
@@ -158,4 +190,4 @@ export default function CreateProject({
       </DialogContent>
     </Dialog>
   );
-}
+

@@ -42,12 +42,10 @@ export function createNode(
   type: string,
   workflowId: string,
   position: { x: number; y: number }
-  // data: Record<string, any> = {}
-  // ...restNodeProperties: any[]
 ) {
   return {
     // ...restNodeProperties,
-    id: "node_" + uuid(),
+    id: "node_" + Date.now(),
     type,
     position,
     data: { inputs: [], output: {}, state: {}, run: () => {} },
@@ -62,7 +60,7 @@ export function createEdge(
 ) {
   return {
     ...connection,
-    id: "edge_" + uuid(),
+    id: "node_" + Date.now(),
     type,
     data,
     markerEnd: {
