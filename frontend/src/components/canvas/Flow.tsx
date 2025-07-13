@@ -63,8 +63,12 @@ export default function Flow() {
   const viewport = useViewport();
   const { showMiniMap, showPanel } = useSettingsSelectors();
   const { updateSettings } = useSettingsActions();
-  const { screenToFlowPosition, getIntersectingNodes, viewportInitialized } =
-    useReactFlow();
+  const {
+    screenToFlowPosition,
+    getIntersectingNodes,
+    viewportInitialized,
+    setViewport,
+  } = useReactFlow();
   const overlappingNodeRef = useRef<Node | null>(null);
   const draggedNode = useRef<Node | null>(null);
 
@@ -89,6 +93,7 @@ export default function Flow() {
   };
 
   const onNodeClick = (event: React.MouseEvent<Element>, node: AppNode) => {
+    console.log("node clicked", node);
     setSelectedNode(node);
     if (node.type === NodeType.NewFlow && !showPanel) {
       updateSettings({ showPanel: !showPanel });
@@ -161,13 +166,13 @@ export default function Flow() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [edges.length, addEdgeToFlow, selectedNode]);
 
-  // useEffect(() => {
-  //   if (currentFlow?.nodes) {
-  //     setNodes(currentFlow.nodes);
-  //     setEdges(currentFlow.edges);
-  //     setViewport(currentFlow.viewport);
-  //   }
-  // }, [currentFlow?.name]);
+  useEffect(() => {
+    if (currentFlow?.nodes) {
+      setNodes(currentFlow.nodes);
+      setEdges(currentFlow.edges);
+      setViewport(currentFlow.viewport);
+    }
+  }, [currentFlow?.id]);
 
   // Update Position
 
@@ -212,7 +217,7 @@ export default function Flow() {
   const NInputComponent = selectedNode
     ? NodeInputComponent[selectedNode.type]
     : null;
-
+  console.log({ selectedNode });
   useEffect(() => {
     console.log(
       "current flow from effect",

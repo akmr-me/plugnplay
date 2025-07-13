@@ -85,7 +85,7 @@ export default function CreateProject({
     const projects = await fetchAllProjects(token, user?.id);
     console.log({ projects });
     addProject(projects?.data);
-    setCurrentFlow(newProject)
+    // setCurrentFlow(newProject)
     setOpen(false);
   };
 

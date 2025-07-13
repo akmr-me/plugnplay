@@ -1,3 +1,4 @@
+"use client";
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -15,8 +16,9 @@ import { Eye, EyeOff, Settings, Copy, TestTube } from "lucide-react";
 import DetailsModal from "./Modal";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import WorkflowJSON from "./WorkflowJSON";
+import ComboboxDemo from "@/components/ComboBox";
 
-export default function WebhookDetails({ setSelectedNode }) {
+export default function WebhookDetails({ setSelectedNode, node }) {
   const [httpMethod, setHttpMethod] = useState("GET");
   const [authType, setAuthType] = useState("none");
   const [authToken, setAuthToken] = useState("");
@@ -55,7 +57,7 @@ export default function WebhookDetails({ setSelectedNode }) {
 
   return (
     <DetailsModal setSelectedNode={setSelectedNode}>
-      <WorkflowJSON data={null} type="input" />
+      <WorkflowJSON node={node} type="input" />
       <ScrollArea
         className="w-full max-w-md mx-auto"
         // className="w-lg mx-auto p-6 bg-gray-50 h-5/6 rounded-lg bg-gradient-to-r from-orange-500 to-red-600"
@@ -157,18 +159,8 @@ export default function WebhookDetails({ setSelectedNode }) {
             {/* Auth Token Section - Only show if auth type is not 'none' */}
             {authType !== "none" && (
               <div className="space-y-2">
-                <Label htmlFor="auth-token" className="text-sm font-medium">
-                  Authentication Token
-                </Label>
+                <ComboboxDemo />
                 <div className="relative">
-                  <Input
-                    id="auth-token"
-                    type={showToken ? "text" : "password"}
-                    value={authToken}
-                    onChange={(e) => setAuthToken(e.target.value)}
-                    placeholder="Paste your token here..."
-                    className="pr-20"
-                  />
                   <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1">
                     <Button
                       type="button"
@@ -216,7 +208,7 @@ export default function WebhookDetails({ setSelectedNode }) {
           </CardContent>
         </Card>
       </ScrollArea>
-      <WorkflowJSON data={null} type="output" />
+      <WorkflowJSON node={node} type="output" />
     </DetailsModal>
   );
 }

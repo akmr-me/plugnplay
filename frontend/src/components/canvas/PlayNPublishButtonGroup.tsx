@@ -28,6 +28,8 @@ export default function PlayNPublishButtonGroup() {
       data
     );
     console.log("saved", response);
+    console.log(data.edges);
+    console.log(data.nodes);
   };
   return (
     <div className="flex items-center gap-2">

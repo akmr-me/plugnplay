@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -16,17 +16,31 @@ import { Clock, Calendar, Play, TestTube2, Settings } from "lucide-react";
 import DetailsModal from "./Modal";
 import WorkflowJSON from "./WorkflowJSON";
 import { intervalUnits, scheduleTypes, timezones } from "@/constants/edges";
+import { useAuth } from "@clerk/nextjs";
+import { createAndUpdateSchedule, getSchedule } from "@/service/node";
+import { useReactFlow } from "@xyflow/react";
 
-export default function ScheduleDetails({ setSelectedNode }) {
-  const [scheduleType, setScheduleType] = useState("interval");
+const formatForDatetimeLocal = (isoString) => {
+  if (!isoString) return "";
+  return new Date(isoString).toISOString().slice(0, 16); // removes Z and trims to correct format
+};
+
+export default function ScheduleDetails({ setSelectedNode, node }) {
+  const { getToken } = useAuth();
+  const { updateNodeData } = useReactFlow();
+  const [scheduleType, setScheduleType] = useState(
+    node.data.state?.scheduleType || "once"
+  );
   const [intervalValue, setIntervalValue] = useState("5");
   const [intervalUnit, setIntervalUnit] = useState("minutes");
   const [cronExpression, setCronExpression] = useState("0 0 * * *");
   const [specificTime, setSpecificTime] = useState("09:00");
-  const [specificDate, setSpecificDate] = useState("");
-  const [timezone, setTimezone] = useState("UTC");
+  const [specificDate, setSpecificDate] = useState(
+    node.data.state?.specificDate || ""
+  );
+  const [timezone, setTimezone] = useState("Asia/Kolkata");
   const [scheduleStatus, setScheduleStatus] = useState("active");
-
+  console.log({ specificDate });
   const getNextRunTime = () => {
     const now = new Date();
     let nextRun = new Date(now);
@@ -50,10 +64,18 @@ export default function ScheduleDetails({ setSelectedNode }) {
         break;
       case "once":
         if (specificDate) {
-          const [datePart, timePart = specificTime] = specificDate.includes("T")
+          const [datePart, timePart = specificTime] = (specificDate.includes(
+            "Z"
+          )
+            ? formatForDatetimeLocal(specificDate)
+            : specificDate
+          ).includes("T")
             ? specificDate.split("T")
             : [specificDate, specificTime];
-          nextRun = new Date(`${datePart}T${timePart}`);
+          console.log({ datePart, timePart });
+          const [year, month, day] = datePart.split("-").map(Number);
+          const [hour, minute] = timePart.split(":").map(Number);
+          nextRun = new Date(year, month - 1, day, hour, minute);
         }
         break;
       default:
@@ -63,9 +85,38 @@ export default function ScheduleDetails({ setSelectedNode }) {
     return nextRun.toLocaleString();
   };
 
+  const handleSubmitSchedule = async () => {
+    if (!specificDate) {
+      alert("Please select a date and run");
+      return;
+    }
+    const token = await getToken();
+    if (!token) return null;
+    await createAndUpdateSchedule(
+      token,
+      node.workflowId,
+      scheduleType,
+      specificDate
+    );
+  };
+
+  useEffect(() => {
+    async function getLatestSchedule() {
+      const token = await getToken();
+      if (!token) return null;
+      const data = await getSchedule(token, node.workflowId);
+      console.log("get date", data);
+      updateNodeData(node.id, {
+        ...node.data,
+        state: { scheduleType: data.schedule_type, specificDate: data.run_at },
+      });
+    }
+    getLatestSchedule();
+  }, []);
+
   return (
     <DetailsModal setSelectedNode={setSelectedNode}>
-      <WorkflowJSON data={null} type="input" />
+      <WorkflowJSON node={node} type="input" />
       <ScrollArea
         className="w-full max-w-md mx-auto"
         onClick={(e) => e.stopPropagation()}
@@ -98,7 +149,11 @@ export default function ScheduleDetails({ setSelectedNode }) {
                 </SelectTrigger>
                 <SelectContent>
                   {scheduleTypes.map((type) => (
-                    <SelectItem key={type.value} value={type.value}>
+                    <SelectItem
+                      key={type.value}
+                      value={type.value}
+                      disabled={type.disable}
+                    >
                       <div className="flex flex-col items-start">
                         <span>{type.label}</span>
                         <span className="text-xs text-muted-foreground">
@@ -193,7 +248,12 @@ export default function ScheduleDetails({ setSelectedNode }) {
                   <Input
                     id="specific-date"
                     type="datetime-local"
-                    value={specificDate}
+                    min={new Date().toISOString().slice(0, 16)}
+                    value={
+                      specificDate.includes("Z")
+                        ? formatForDatetimeLocal(specificDate)
+                        : specificDate
+                    }
                     onChange={(e) => setSpecificDate(e.target.value)}
                     className="w-full"
                   />
@@ -212,7 +272,11 @@ export default function ScheduleDetails({ setSelectedNode }) {
                 </SelectTrigger>
                 <SelectContent>
                   {timezones.map((tz) => (
-                    <SelectItem key={tz.value} value={tz.value}>
+                    <SelectItem
+                      key={tz.value}
+                      value={tz.value}
+                      disabled={tz.disable}
+                    >
                       {tz.label}
                     </SelectItem>
                   ))}
@@ -252,7 +316,11 @@ export default function ScheduleDetails({ setSelectedNode }) {
 
             {/* Action Buttons */}
             <div className="flex gap-2 pt-4">
-              <Button className="flex-1" size="sm">
+              <Button
+                className="flex-1"
+                size="sm"
+                onClick={handleSubmitSchedule}
+              >
                 Save Schedule
               </Button>
               <Button
@@ -267,7 +335,7 @@ export default function ScheduleDetails({ setSelectedNode }) {
           </CardContent>
         </Card>
       </ScrollArea>
-      <WorkflowJSON data={null} type="output" />
+      <WorkflowJSON node={node} type="output" />
     </DetailsModal>
   );
 }

@@ -1,60 +1,47 @@
 import React, { useEffect, useState } from "react";
-import {
-  Plus,
-  Trash2,
-  Eye,
-  Edit3,
-  Calendar,
-  Mail,
-  Hash,
-  Type,
-  FileText,
-  XIcon,
-  FormInput,
-} from "lucide-react";
+import { Plus, Eye, Edit3, XIcon, FormInput } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
-import { Checkbox } from "@/components/ui/checkbox";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { Node, useReactFlow } from "@xyflow/react";
-import { AppNode, LucideReactIcon } from "@/types";
+import { AppNode, FieldType, ValidField } from "@/types";
 import WorkflowJSON from "./WorkflowJSON";
 import DetailsModal from "./Modal";
-
-type FormFieldType = {
-  type: ValidField;
-  label: string;
-  icon: LucideReactIcon;
-};
-type ValidField = "text" | "email" | "number" | "textarea" | "date";
-type FieldType = {
-  id: string;
-  type: ValidField;
-  label?: string;
-  required: boolean;
-  placeholder?: string;
-};
+import UrlCopyComponent from "@/components/UrlCopyComponent";
+import useDebounceCallback from "@/hooks/useDebounceCallback";
+import {
+  createFormField,
+  createFormTrigger,
+  deleteFormField,
+  testSubmitForm,
+  updateFormTrigger,
+} from "@/service/node";
+import { useAuth } from "@clerk/nextjs";
+import { fieldTypes } from "@/constants";
+import FieldEditor from "./form/FieldEditor";
+import PreviewField from "./form/PreviewField";
 
 const FormBuilder = ({
   node,
   setSelectedNode,
 }: {
-  node: Node;
+  node: Node & { workflowId: string };
   setSelectedNode: React.SetStateAction<AppNode | undefined>;
 }) => {
   const { id, data } = node;
+  const { getToken } = useAuth();
   const { updateNodeData } = useReactFlow();
+  const [shouldRerender, setShouldRerender] = useState(false);
   const [isPreviewMode, setIsPreviewMode] = useState(false);
   const [formTitle, setFormTitle] = useState<string>(
-    (data.formTitle as string) || "Untitled Form"
+    (data.state?.formTitle as string) || "Untitled Form"
   );
   const [formDescription, setFormDescription] = useState<string>(
-    (data.formDescription as string) || ""
+    (data.state?.formDescription as string) || ""
   );
   const [fields, setFields] = useState<FieldType[]>(
     (data.fields as FieldType[]) || []
@@ -63,61 +50,39 @@ const FormBuilder = ({
     {}
   );
 
-  const fieldTypes: FormFieldType[] = [
-    { type: "text", label: "Text", icon: Type },
-    { type: "email", label: "Email", icon: Mail },
-    { type: "number", label: "Number", icon: Hash },
-    { type: "textarea", label: "Text Area", icon: FileText },
-    { type: "date", label: "Date", icon: Calendar },
-  ];
-
-  const addField = (type: ValidField) => {
-    const newField: FieldType = {
-      id: Date.now().toString(),
+  const addField = async (type: ValidField) => {
+    const token = await getToken();
+    if (!token) return;
+    const newField = await createFormField(
+      token,
+      node.workflowId,
       type,
-      required: false,
-    };
-    setFields([...fields, newField]);
-  };
-
-  const updateField = (id: string, updates: FieldType) => {
-    setFields(
-      fields.map((field) =>
-        field.id === id ? { ...field, ...updates } : field
-      )
+      fields.length + 1,
+      false
     );
-  };
 
-  const deleteField = (id: string) => {
-    setFields(fields.filter((field) => field.id !== id));
-    const newResponses = { ...formResponses };
-    delete newResponses[id];
-    setFormResponses(newResponses);
-  };
-
-  const handleFormResponse = (
-    fieldId: string,
-    value: string,
-    label: string
-  ) => {
-    setFormResponses((prev) => ({
-      ...prev,
-      [label]: value,
-    }));
+    setFields([...fields, newField]);
+    updateNodeData(id, {
+      ...node.data,
+      state: { ...(node.data?.state || {}), fields: [...fields, newField] },
+    });
   };
 
   const validateForm = () => {
     const requiredFields = fields.filter((field) => field.required);
-    const missingFields = requiredFields.filter(
-      (field) =>
+    console.log("requiredFields", requiredFields, formResponses);
+    const missingFields = requiredFields.filter((field) => {
+      return (
         !formResponses[field.id] ||
         formResponses[field.id].toString().trim() === ""
-    );
+      );
+    });
     return missingFields;
   };
-
-  const handleSubmit = () => {
+  console.log("formResponses", formResponses);
+  const handleSubmit = async () => {
     const missingFields = validateForm();
+    console.log({ missingFields });
     if (missingFields.length > 0) {
       alert(
         `Please fill in the following required fields: ${missingFields
@@ -127,143 +92,25 @@ const FormBuilder = ({
       return;
     }
 
-    console.log("Form Submitted:", {
-      title: formTitle,
-      description: formDescription,
-      responses: formResponses,
-    });
     try {
-      updateNodeData(node.id, { ...node.data, output: formResponses });
+      console.log({ formResponses });
+      const token = await getToken();
+      if (!token) return;
+      const response = await testSubmitForm(
+        token,
+        node.workflowId,
+        formResponses
+      );
+      // const testFormData = await testSubmitForm(node.workflowId, formResponses);
+      console.log({ response });
+      updateNodeData(node.id, { ...node.data, output: response });
+      setShouldRerender((prev) => !prev);
     } catch (error) {
       console.error(error);
     }
     alert("Form submitted successfully!" + node.id);
   };
   console.log("node is updated", node);
-  const renderFieldInput = (field: FieldType) => {
-    const commonProps = {
-      value: formResponses[field.label as string] || "",
-      onChange: (
-        e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
-      ) => handleFormResponse(String(field.id), e.target.value, field.label!),
-      placeholder: field.placeholder,
-    };
-
-    switch (field.type) {
-      case "text":
-        return <Input type="text" {...commonProps} />;
-      case "email":
-        return <Input type="email" {...commonProps} />;
-      case "number":
-        return <Input type="number" {...commonProps} />;
-      case "date":
-        return <Input type="date" {...commonProps} />;
-      case "textarea":
-        return <Textarea {...commonProps} rows={4} />;
-      default:
-        return <Input type="text" {...commonProps} />;
-    }
-  };
-
-  const renderFieldEditor = (field: FieldType) => {
-    const FieldIcon =
-      fieldTypes.find((t) => t.type === field.type)?.icon || Type;
-
-    return (
-      <Card key={field.id} className="w-full">
-        <CardContent className="p-4">
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-2">
-              <FieldIcon className="h-4 w-4 text-muted-foreground" />
-              <Badge variant="outline" className="text-xs capitalize">
-                {field.type} Field
-              </Badge>
-            </div>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => deleteField(field.id)}
-              className="text-destructive hover:text-destructive"
-            >
-              <Trash2 className="h-4 w-4" />
-            </Button>
-          </div>
-
-          <div className="space-y-4">
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-2">
-                <Label
-                  htmlFor={`label-${field.id}`}
-                  className="text-sm font-medium"
-                >
-                  Field Label
-                </Label>
-                <Input
-                  id={`label-${field.id}`}
-                  value={field.label || ""}
-                  onChange={(e) =>
-                    updateField(field.id, {
-                      label: e.target.value,
-                    } as FieldType)
-                  }
-                  placeholder="Enter field label"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label
-                  htmlFor={`placeholder-${field.id}`}
-                  className="text-sm font-medium"
-                >
-                  Placeholder
-                </Label>
-                <Input
-                  id={`placeholder-${field.id}`}
-                  value={field.placeholder || ""}
-                  onChange={(e) =>
-                    updateField(field.id, {
-                      placeholder: e.target.value,
-                    } as FieldType)
-                  }
-                  placeholder="Enter placeholder text"
-                />
-              </div>
-            </div>
-
-            <div className="flex items-center space-x-2">
-              <Checkbox
-                id={`required-${field.id}`}
-                checked={field.required}
-                onCheckedChange={(checked) =>
-                  updateField(field.id, {
-                    required: checked as boolean,
-                  } as FieldType)
-                }
-              />
-              <Label
-                htmlFor={`required-${field.id}`}
-                className="text-sm font-medium cursor-pointer"
-              >
-                Required field
-              </Label>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-    );
-  };
-
-  const renderPreviewField = (field: FieldType) => {
-    return (
-      <div key={field.id} className="space-y-2">
-        <Label className="text-sm font-medium">
-          {field.label}
-          {field.required && <span className="text-destructive ml-1">*</span>}
-        </Label>
-        {renderFieldInput(field)}
-      </div>
-    );
-  };
 
   const closeDialog = (e: React.MouseEvent<HTMLElement>) => {
     e.stopPropagation();
@@ -273,13 +120,94 @@ const FormBuilder = ({
     }
   };
 
+  const debouncedUpdateForm = useDebounceCallback(updateFormTrigger, 400);
+
   useEffect(() => {
+    const updateForm = async () => {
+      const token = await getToken();
+      if (!token) return;
+      const {
+        title,
+        description,
+        id,
+        fields: serverFields,
+      } = await createFormTrigger(
+        token,
+        formTitle,
+        node.workflowId,
+        formDescription
+      );
+      console.log(
+        "form",
+        { title, description, id },
+        {
+          fields: serverFields,
+          formDescription: description,
+          formTitle: title,
+          formId: node.workflowId,
+        }
+      );
+      updateNodeData(id, {
+        ...node.data,
+        state: {
+          fields: serverFields,
+          formDescription: description,
+          formTitle: title,
+          formId: node.workflowId,
+        },
+      });
+      setFields(serverFields);
+    };
+    updateForm();
+  }, []);
+
+  const formURL = process.env.NEXT_PUBLIC_API_URL + "form/" + node.workflowId;
+
+  const handleChangeFormTitle = async (
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const title = e.target.value;
+    if (!title) return;
+    setFormTitle(e.target.value);
     updateNodeData(id, {
       ...node.data,
-      state: { fields, formDescription, formTitle },
+      state: {
+        ...(node.data?.state || {}),
+        formTitle: title,
+      },
     });
-  }, [fields, formDescription, formTitle, id, updateNodeData]);
-  console.log("node from flow builder", fields);
+    const token = await getToken();
+    if (!token) return;
+    debouncedUpdateForm(token, node.workflowId, title);
+  };
+  const handleChangeFormDescription = async (
+    e: React.ChangeEvent<HTMLTextAreaElement>
+  ) => {
+    const description = e.target.value;
+    if (!description) return;
+    setFormDescription(e.target.value);
+    updateNodeData(id, {
+      ...node.data,
+      state: {
+        ...(node.data?.state || {}),
+        formDescription: description,
+      },
+    });
+    const token = await getToken();
+    if (!token) return;
+    debouncedUpdateForm(token, node.workflowId, undefined, description);
+  };
+
+  const deleteField = async (id: string) => {
+    const token = await getToken();
+    if (!token) return;
+    await deleteFormField(token, node.workflowId, id);
+    setFields(fields.filter((field) => field.id !== id));
+    const newResponses = { ...formResponses };
+    delete newResponses[id];
+    setFormResponses(newResponses);
+  };
+
   return (
     <DetailsModal setSelectedNode={setSelectedNode}>
       <WorkflowJSON type="input" node={node} />
@@ -328,6 +256,7 @@ const FormBuilder = ({
                   </Button>
                 </div>
               </div>
+              <UrlCopyComponent url={formURL} />
             </CardHeader>
 
             <CardContent className="space-y-6">
@@ -345,7 +274,7 @@ const FormBuilder = ({
                       <Input
                         id="form-title"
                         value={formTitle}
-                        onChange={(e) => setFormTitle(e.target.value)}
+                        onChange={handleChangeFormTitle}
                         placeholder="Enter form title"
                         className="text-lg font-semibold"
                       />
@@ -360,7 +289,7 @@ const FormBuilder = ({
                       <Textarea
                         id="form-description"
                         value={formDescription}
-                        onChange={(e) => setFormDescription(e.target.value)}
+                        onChange={handleChangeFormDescription}
                         placeholder="Enter form description"
                         rows={2}
                       />
@@ -412,7 +341,15 @@ const FormBuilder = ({
                         </CardContent>
                       </Card>
                     ) : (
-                      fields.map(renderFieldEditor)
+                      fields.map((field) => (
+                        <FieldEditor
+                          field={field}
+                          key={field.id}
+                          setFields={setFields}
+                          workflowId={node.workflowId}
+                          deleteField={deleteField}
+                        />
+                      ))
                     )}
                   </div>
                 </div>
@@ -426,7 +363,14 @@ const FormBuilder = ({
                   ) : (
                     <>
                       <div className="space-y-4">
-                        {fields.map(renderPreviewField)}
+                        {fields.map((field) => (
+                          <PreviewField
+                            key={field.id}
+                            setFormResponses={setFormResponses}
+                            formResponses={formResponses}
+                            field={field}
+                          />
+                        ))}
                       </div>
                       <Separator />
                       <div className="flex justify-end">
@@ -442,7 +386,7 @@ const FormBuilder = ({
           </Card>
         </div>
       </ScrollArea>
-      <WorkflowJSON node={node} type="output" />
+      <WorkflowJSON node={node} type="output" shouldRender={shouldRerender} />
     </DetailsModal>
   );
 };

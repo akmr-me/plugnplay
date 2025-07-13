@@ -9,11 +9,20 @@ import React from "react";
 import { Trash2 as Trash } from "lucide-react";
 import { Node } from "@xyflow/react";
 import useHistory from "@/hooks/useHistory";
+import { NodeType } from "@/types";
+import { deleteForm, deleteSchedule } from "@/service/node";
+import { useAuth } from "@clerk/nextjs";
+import { useFlowSelectors } from "@/stores";
 
 type NodeTooltipProps = {
   children: React.ReactElement; // changed from React.ReactNode
   hoverTrigger?: React.ReactNode;
   node: Node;
+};
+
+const NODE_TYPE_DELETE_URL_OBJECT = {
+  [NodeType.ScheduleTrigger]: deleteSchedule,
+  [NodeType.FormTrigger]: deleteForm,
 };
 
 export default function NodeTooltip({
@@ -22,8 +31,13 @@ export default function NodeTooltip({
   ...props
 }: NodeTooltipProps) {
   const { removeNode } = useHistory();
-  const handleRemoveNode = () => {
-    console.log("removing node", node);
+  const { getToken } = useAuth();
+  const { currentFlow } = useFlowSelectors();
+  const handleRemoveNode = async () => {
+    const token = await getToken();
+    if (!token) return;
+    console.log("removing node", node, currentFlow);
+    await NODE_TYPE_DELETE_URL_OBJECT[node.type]?.(token, currentFlow.id);
     removeNode(node);
   };
   return (

@@ -34,6 +34,7 @@ export default function WorkflowSidebarSubMenu({
     deleteFlow,
     addProject,
   } = useFlowActions();
+
   const handleDeleteFlow = async (projectId: string, workflowId: string) => {
     if (!projectId || !workflowId) return;
     const userConfirmation = confirm(
@@ -70,6 +71,7 @@ export default function WorkflowSidebarSubMenu({
   };
 
   const getFlowDetails = async (projectId: string, workflowId: string) => {
+    console.log({ projectId, workflowId });
     const token = await getToken();
     if (!token || !user?.id) return;
     const response = await getFlowDetailsByProjectAndFlowId(
@@ -126,16 +128,19 @@ export default function WorkflowSidebarSubMenu({
       {flows?.map((flow) => (
         <SidebarMenuSubItem
           key={flow.id}
-          className="flex items-center justify-between"
+          className={"flex items-center justify-between"}
         >
           <>
             <span
               onClick={() => getFlowDetails(project.id, flow.id)}
               // className="dark:text-gray-500"
-              className="truncate overflow-hidden whitespace-nowrap flex-1 mr-2 cursor-pointer"
+              className={
+                "truncate overflow-hidden whitespace-nowrap flex-1 mr-2 cursor-pointer" +
+                (currentFlow && currentFlow.id === flow.id ? " font-bold" : "")
+              }
               style={{ maxWidth: "120px" }}
             >
-              {flow.title}
+              {flow.name}
             </span>
             <Trash
               color="red"

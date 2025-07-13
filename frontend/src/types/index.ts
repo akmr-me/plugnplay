@@ -75,3 +75,19 @@ export type DetailsModalProps = {
   node: Node;
   setSelectedNode: React.Dispatch<React.SetStateAction<Node>>;
 };
+
+// **********************************************************FORM******************************************
+export type ValidField = "text" | "email" | "number" | "textarea" | "date";
+export type FormFieldType = {
+  type: ValidField;
+  label: string;
+  icon: LucideReactIcon;
+};
+export type FieldType = {
+  id: string;
+  type: ValidField;
+  label?: string;
+  required: boolean;
+  placeholder?: string;
+  position: number;
+};

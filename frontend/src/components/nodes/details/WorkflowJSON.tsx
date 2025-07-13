@@ -13,12 +13,13 @@ import { AppNode } from "@/types";
 import { Edge, Node, useReactFlow } from "@xyflow/react";
 import { githubDarkTheme, JsonEditor } from "json-edit-react";
 import { FileJson2 } from "lucide-react";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 
 type WorkflowInput = {
   node: AppNode;
   setDate?: React.Dispatch<React.SetStateAction<unknown>>;
   type: "input" | "output";
+  shouldRender?: boolean;
 };
 
 export function getInputOrOutPutData(
@@ -41,13 +42,16 @@ export function getInputOrOutPutData(
   }
 }
 
-function WorkflowInput({ node, type }: WorkflowInput) {
+function WorkflowInput({ node, type, shouldRender }: WorkflowInput) {
   const { getNodes, getEdges } = useReactFlow();
   const [data, setData] = useState(() =>
     getInputOrOutPutData(type, getEdges(), node, getNodes())
   );
   console.log("WorkflowInput", { node, data });
-
+  useEffect(() => {
+    setData(getInputOrOutPutData(type, getEdges(), node, getNodes()));
+  }, [shouldRender]);
+  if (type == "input" && node?.type?.includes("trigger")) return null;
   return (
     <ScrollArea
       className="w-full max-w-lg mx-auto max-h-[580px]!"
@@ -83,8 +87,9 @@ function WorkflowInput({ node, type }: WorkflowInput) {
           <Note>To copy path hover on the key click to copy icon.</Note>
         </CardFooter>
       </Card>
+      {shouldRender && ""}
     </ScrollArea>
   );
 }
 
-export default React.memo(WorkflowInput);
+export default WorkflowInput;

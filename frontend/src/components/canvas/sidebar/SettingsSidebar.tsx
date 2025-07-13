@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import {
   SidebarGroup,
   SidebarGroupContent,
@@ -11,6 +11,10 @@ import { Settings } from "lucide-react";
 import Command from "@/components/Icons/Command";
 import Ctrl from "@/components/Icons/Ctrl";
 import { Switch } from "@/components/ui/switch";
+import { Button } from "@/components/ui/button";
+import CredentialManager from "@/components/credential/Manager";
+import { Dialog } from "@/components/ui/dialog";
+import Link from "next/link";
 
 const isMac = navigator.userAgent.toLowerCase().includes("mac");
 const ICON = () => (isMac ? <Command /> : <Ctrl />);
@@ -33,6 +37,15 @@ const SettingsItems = {
   "Show Panel": (
     <div className="flex items-center gap-1">
       <ICON /> + O
+    </div>
+  ),
+  Credentails: (
+    <div className="flex items-center gap-1">
+      🗝️
+      {/* <Show /> */}
+      <Link href="/canvas/credential" className="flex items-center gap-1">
+        Add
+      </Link>
     </div>
   ),
 };
@@ -61,5 +74,21 @@ export default function SettingsSidebar() {
         </SidebarMenu>
       </SidebarGroupContent>
     </SidebarGroup>
+  );
+}
+
+function Show() {
+  const [show, setShow] = useState(false);
+  return (
+    <>
+      <Button onClick={() => setShow(true)}>Add</Button>
+      {show && (
+        <Dialog open={show} onOpenChange={setShow}>
+          {/* <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[999]"> */}
+          <CredentialManager />
+          {/* </div> */}
+        </Dialog>
+      )}
+    </>
   );
 }

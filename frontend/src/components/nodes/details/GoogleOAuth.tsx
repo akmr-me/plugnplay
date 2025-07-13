@@ -2,6 +2,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
 export default function GoogleOAuth() {
+  let clientId;
   return (
     <div className="space-y-4">
       <div className="text-sm text-muted-foreground">

@@ -66,14 +66,14 @@ export default function ProjectSidebar() {
     setCurrentFlow(null);
   };
 
-  console.log({ currentFlow });
+  console.log({ currentFlow, currentProject });
   return (
     <SidebarGroup key={"Project"}>
       <SidebarGroupLabel className="sidebar-group-label justify-between cursor-pointer">
         {"Projects"} <RefreshCcw onClick={handleFetchAllProjects} />
       </SidebarGroupLabel>
       {mappedData.map((project) => (
-        <SidebarGroupContent key={project.id + "project"}>
+        <SidebarGroupContent key={project.id}>
           <SidebarMenu>
             <Collapsible className="group/collapsible">
               <CollapsibleTrigger asChild>
