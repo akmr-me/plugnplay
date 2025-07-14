@@ -244,3 +244,62 @@ export const deleteCredential = async (
   });
   return response.status;
 };
+
+export const getWebhook = async (token: string, workflowId: string) => {
+  const EndPoint = process.env.NEXT_PUBLIC_API_URL + "webhook/" + workflowId;
+  const response = await fetch(EndPoint, {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+  });
+  return await response.json();
+};
+
+export const createWebhook = async (
+  token: string,
+  workflowId: string,
+  webhook: Record<string, string>
+) => {
+  const EndPoint = process.env.NEXT_PUBLIC_API_URL + "webhook/" + workflowId;
+  const response = await fetch(EndPoint, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify(webhook),
+  });
+  return await response.json();
+};
+
+export const updateWebhook = async (
+  token: string,
+  workflowId: string,
+  webhook: Record<string, string>
+) => {
+  const EndPoint = process.env.NEXT_PUBLIC_API_URL + "webhook/" + workflowId;
+
+  const response = await fetch(EndPoint, {
+    method: "PATCH",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify(webhook),
+  });
+  return await response.json();
+};
+
+export const deleteWebhook = async (token: string, workflowId: string) => {
+  const EndPoint = process.env.NEXT_PUBLIC_API_URL + "webhook/" + workflowId;
+  const response = await fetch(EndPoint, {
+    method: "DELETE",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+  });
+  return response.status;
+};

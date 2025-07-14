@@ -18,7 +18,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Eye, EyeOff, Key, Globe } from "lucide-react";
+import { Eye, EyeOff, Globe } from "lucide-react";
 import { CREDENTIAL_TYPES } from "@/constants";
 import { createAndUpdateCredential } from "@/service/node";
 import { useUser } from "@clerk/nextjs";
@@ -57,8 +57,6 @@ export default function CredentialComponent({ isOpen, setIsOpen }) {
   const handleGoogleAuth = async () => {
     setIsGoogleAuthenticating(true);
 
-    // Simulate Google OAuth flow
-    // In real implementation, you would integrate with Google OAuth API
     try {
       await new Promise((resolve) => setTimeout(resolve, 2000)); // Simulate API call
 

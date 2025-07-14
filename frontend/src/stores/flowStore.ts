@@ -42,6 +42,7 @@ const defaultFlow: FlowState = {
   currentFlow: null,
   allProjects: initialProjects,
   templates: [],
+  needsSave: false,
 };
 
 export const useFlowStore = create<FlowStore>()(
@@ -82,6 +83,7 @@ export const useFlowStore = create<FlowStore>()(
         updateFlow: (flow) => {
           set((state) => {
             console.log("update flow called", flow);
+            state.needsSave = true;
             const index = state.allProjects.findIndex(
               (p) => p.id === flow.projectId
             );
@@ -229,7 +231,11 @@ export const useFlowStore = create<FlowStore>()(
             }
           });
         },
-
+        save: () => {
+          set((state) => {
+            state.needsSave = false;
+          });
+        },
         addEdgeToFlow: (edges) => {
           set((state) => {
             if (state.currentFlow) {

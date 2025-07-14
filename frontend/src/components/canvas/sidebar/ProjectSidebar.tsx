@@ -1,5 +1,8 @@
+"use client";
+
 import { useFlowActions, useFlowSelectors } from "@/stores";
-import React, { useCallback, useEffect } from "react";
+import { useParams, useRouter } from "next/navigation";
+import React, { useCallback, useEffect, useState } from "react";
 import {
   SidebarGroup,
   SidebarGroupContent,
@@ -17,19 +20,24 @@ import { fetchAllProjects } from "@/service/flow";
 import { useAuth, useUser } from "@clerk/nextjs";
 import WorkflowSidebarSubMenu from "./WorkflowSidebarSubMenu";
 import { Project } from "@/types";
+import { toast } from "sonner";
 
 export default function ProjectSidebar() {
-  const { allProjects, currentFlow, currentProject } = useFlowSelectors();
+  const params = useParams();
+  const { allProjects, currentFlow, currentProject, needsSave } =
+    useFlowSelectors();
+  const router = useRouter();
   const { setCurrentProject, setCurrentFlow, addProject } = useFlowActions();
   const { getToken } = useAuth();
   const { user, isSignedIn } = useUser();
-
+  const [isOpen, setIsOpen] = useState(() => (params.projectId ? true : false));
+  console.log("params from side bar", params);
   const mappedData = React.useMemo(() => {
     return allProjects?.map((project) => ({
       ...project,
       title: project.name,
       // url: `/projects/${project.id}`,
-      url: "#",
+      url: "ca",
       // items: project.flows.map((flow) => ({
       //   ...flow,
       //   title: flow.name,
@@ -60,34 +68,52 @@ export default function ProjectSidebar() {
     }
   }, [isSignedIn, handleFetchAllProjects]);
 
-  const handleGetAllFlows = (projectId: string, project: Project) => {
-    const newProject = projectId === currentProject?.id ? null : project;
-    setCurrentProject(newProject);
-    setCurrentFlow(null);
-  };
-
   console.log({ currentFlow, currentProject });
+  const handleOpenChange = (open: boolean, project: Project) => {
+    setIsOpen(open);
+    if (open) {
+      const projectId = project.id;
+      setCurrentProject(project);
+
+      setCurrentFlow(null);
+      router.push(`/canvas/project/${projectId}`);
+      console.log("router push called");
+    } else {
+      if (needsSave) {
+        const userConfirmation = confirm(
+          "Unsaved changes will be lost. Are you sure you want to continue?"
+        );
+        if (!userConfirmation) {
+          return;
+        }
+      }
+      setCurrentProject(null);
+      setCurrentFlow(null);
+      router.push(`/canvas`);
+    }
+  };
   return (
-    <SidebarGroup key={"Project"}>
+    <SidebarGroup key="Project">
       <SidebarGroupLabel className="sidebar-group-label justify-between cursor-pointer">
         {"Projects"} <RefreshCcw onClick={handleFetchAllProjects} />
       </SidebarGroupLabel>
       {mappedData.map((project) => (
         <SidebarGroupContent key={project.id}>
           <SidebarMenu>
-            <Collapsible className="group/collapsible">
+            <Collapsible
+              className="group/collapsible"
+              open={isOpen && !!params.projectId}
+              onOpenChange={(open) => handleOpenChange(open, project)}
+            >
               <CollapsibleTrigger asChild>
                 <SidebarMenuButton
-                  isActive={currentProject?.id === project.id}
+                  isActive={params?.projectId === project.id}
                   className="pl-4 flex items-center justify-between cursor-pointer min-w-0"
-                  onClick={() => {
-                    handleGetAllFlows(project.id, project);
-                  }}
                 >
                   <span className="truncate overflow-hidden whitespace-nowrap flex-1 mr-2 cursor-pointer">
                     {project.title}
                   </span>
-                  {currentProject?.id === project.id ? (
+                  {params.projectId === project.id ? (
                     <ChevronDown className="flex-shrink-0" />
                   ) : (
                     <ChevronRight className="flex-shrink-0" />

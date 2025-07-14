@@ -37,6 +37,7 @@ export const useFlowSelectors = () => ({
   allProjects: useFlowStore((state) => state.allProjects),
   templates: useFlowStore((state) => state.templates),
   draggingNodeType: useFlowStore((state) => state.draggingNodeType),
+  needsSave: useFlowStore((state) => state.needsSave),
 });
 
 export const useFlowActions = () => ({
@@ -57,6 +58,7 @@ export const useFlowActions = () => ({
   removeNodeFromFlow: useFlowStore((state) => state.removeNodeFromFlow),
   addEdgeToFlow: useFlowStore((state) => state.addEdgeToFlow),
   removeEdgeFromFlow: useFlowStore((state) => state.removeEdgeFromFlow),
+  saveWorkflow: useFlowStore((state) => state.save),
 });
 export const useHistorySelector = () => ({
   history: useHistoryStore((store) => store.history),

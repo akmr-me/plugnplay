@@ -44,6 +44,7 @@ import HttpRequestDetals from "../nodes/details/HTTPRequests";
 import JavascriptEditorDetails from "../nodes/details/JavascriptEditor";
 import IfConditionDetails from "../nodes/details/IfCondition";
 import GmailDetails from "../nodes/details/Gmail";
+import OpenAIDetails from "../nodes/details/AiAgent";
 
 export default function Flow() {
   const [selectedNode, setSelectedNode] = useState<
@@ -85,7 +86,6 @@ export default function Flow() {
   );
 
   const isValidConnection = (connection: Edge | Connection) => {
-    console.log({ connection });
     const { source, target } = connection;
     // not be able to connect to same node
     if (source == target) return false;
@@ -93,7 +93,6 @@ export default function Flow() {
   };
 
   const onNodeClick = (event: React.MouseEvent<Element>, node: AppNode) => {
-    console.log("node clicked", node);
     setSelectedNode(node);
     if (node.type === NodeType.NewFlow && !showPanel) {
       updateSettings({ showPanel: !showPanel });
@@ -150,11 +149,6 @@ export default function Flow() {
   useEffect(() => {
     if (nodes.length === 0) addNode(startNode);
     else {
-      // const { nodes = [], edges = [] } = workflow?.toObject() || {};
-      console.log("nodes", nodes);
-      // const viewport = getViewport();
-      console.log("viewport to save", viewport);
-
       updateFlow({ ...currentFlow, nodes, edges });
     }
   }, [nodes.length, nodes?.[0]?.type, nodeDropped, selectedNode]);
@@ -177,7 +171,6 @@ export default function Flow() {
   // Update Position
 
   const onNodeDrag: OnNodeDrag = (evt, dragNode) => {
-    console.log("ondtarg start");
     const overlappingNode = getIntersectingNodes(dragNode)?.[0];
     overlappingNodeRef.current = overlappingNode;
   };
@@ -205,36 +198,20 @@ export default function Flow() {
       });
     }
   };
-  // console.log(workflow?.toObject());
+
   const onNodeDragStart = (evt, dragNode) => {
     draggedNode.current = dragNode;
   };
   // const viewport = getViewport();
-  console.log("viewport", viewport);
 
   const shouldShowTools =
     nodes.length >= 1 && nodes.some((n) => n.type !== NodeType.NewFlow);
   const NInputComponent = selectedNode
     ? NodeInputComponent[selectedNode.type]
     : null;
-  console.log({ selectedNode });
   useEffect(() => {
-    console.log(
-      "current flow from effect",
-      currentFlow,
-      currentFlow?.viewport,
-      viewportInitialized,
-      viewport
-    );
     if (viewportInitialized) {
-      console.log(
-        "viewportInitializedviewportInitialized",
-        viewportInitialized
-      );
-      // const { x = 0, y = 0, zoom = 1 } = currentFlow?.viewport || {};
-      // setViewport({ x, y, zoom });
       updateFlow({ ...currentFlow, viewport });
-      // setViewport(currentFlow?.viewport);
     }
   }, [viewport]);
   const handleEdgeChange = (e, edgeProp) => {
@@ -337,7 +314,7 @@ export default function Flow() {
 }
 
 const NodeInputComponent = {
-  [NodeType.OpenAITools]: ChatBox,
+  [NodeType.OpenAITools]: OpenAIDetails,
   [NodeType.FormTrigger]: FormBuilder,
   [NodeType.WebhookTrigger]: Webhook,
   [NodeType.ScheduleTrigger]: ScheduleDetails,

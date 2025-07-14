@@ -13,6 +13,7 @@ import {
   getFlowDetailsByProjectAndFlowId,
 } from "@/service/flow";
 import { useAuth, useUser } from "@clerk/nextjs";
+import { useParams, useRouter } from "next/navigation";
 
 type WorkflowSidebarSubMenuProps = {
   project: Project;
@@ -24,16 +25,12 @@ export default function WorkflowSidebarSubMenu({
   handleFetchAllProjects,
 }: WorkflowSidebarSubMenuProps) {
   const { getToken } = useAuth();
-  const { user } = useUser();
+  const { user, isSignedIn } = useUser();
+  const router = useRouter();
+  const params = useParams();
   const [flows, setFlows] = useState<Flow[]>([]);
-  const { allProjects, currentFlow, currentProject } = useFlowSelectors();
-  const {
-    setCurrentProject,
-    setCurrentFlow,
-    deleteProject,
-    deleteFlow,
-    addProject,
-  } = useFlowActions();
+  const { currentFlow, needsSave } = useFlowSelectors();
+  const { setCurrentProject, setCurrentFlow } = useFlowActions();
 
   const handleDeleteFlow = async (projectId: string, workflowId: string) => {
     if (!projectId || !workflowId) return;
@@ -69,9 +66,22 @@ export default function WorkflowSidebarSubMenu({
       handleFetchAllProjects();
     }
   };
-
+  console.log("sidebar submenu");
   const getFlowDetails = async (projectId: string, workflowId: string) => {
     console.log({ projectId, workflowId });
+    if (needsSave && params.flowId) {
+      const userConfirmation = confirm(
+        "Unsaved changes will be lost. Are you sure you want to continue?"
+      );
+      if (!userConfirmation) {
+        return;
+      }
+    }
+    if (currentFlow?.id === workflowId) {
+      setCurrentFlow(null);
+      router.push(`/canvas/project/${projectId}`);
+      return;
+    }
     const token = await getToken();
     if (!token || !user?.id) return;
     const response = await getFlowDetailsByProjectAndFlowId(
@@ -80,23 +90,23 @@ export default function WorkflowSidebarSubMenu({
       workflowId,
       projectId
     );
-    console.log("workflow deatails", response);
     if (response) setCurrentFlow(response);
+    router.push(`/canvas/project/${projectId}/flow/${workflowId}`);
   };
 
   const getAllFlows = async () => {
     const token = await getToken();
     if (!token || !user?.id) return;
     const response = await getAllFlowsInProject(token, user?.id, project.id);
-    console.log("fetching again");
     if (response.data.length)
       setFlows(response.data.map((flow) => ({ ...flow, title: flow.name })));
     console.log(response);
   };
   useEffect(() => {
-    getAllFlows();
-  }, [project.id]);
-  console.log({ flows });
+    console.log("console.log");
+    if (isSignedIn) getAllFlows();
+  }, [project.id, params.projectId, isSignedIn]);
+
   return (
     <SidebarMenuSub className="" key={"project" + project.id}>
       <div className="flex justify-between">

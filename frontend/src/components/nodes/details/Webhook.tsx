@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -16,45 +16,101 @@ import { Eye, EyeOff, Settings, Copy, TestTube } from "lucide-react";
 import DetailsModal from "./Modal";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import WorkflowJSON from "./WorkflowJSON";
-import ComboboxDemo from "@/components/ComboBox";
+import AuthCredentials from "@/components/AuthCredentials";
+import { createWebhook, getWebhook } from "@/service/node";
+import { useAuth, useUser } from "@clerk/nextjs";
+const httpMethods = [
+  { value: "GET", label: "GET", enabled: true },
+  { value: "POST", label: "POST", enabled: true },
+  { value: "PUT", label: "PUT", enabled: false },
+  { value: "PATCH", label: "PATCH", enabled: false },
+  { value: "DELETE", label: "DELETE", enabled: false },
+];
+
+const authTypes = [
+  { value: "none", label: "None" },
+  { value: "bearer-token", label: "Bearer Token" },
+  { value: "api-key", label: "API Key" },
+  { value: "basic-auth", label: "Basic Auth" },
+];
 
 export default function WebhookDetails({ setSelectedNode, node }) {
+  const { getToken } = useAuth();
+  const { user } = useUser();
   const [httpMethod, setHttpMethod] = useState("GET");
   const [authType, setAuthType] = useState("none");
   const [authToken, setAuthToken] = useState("");
   const [showToken, setShowToken] = useState(false);
-  const [webhookUrl, setWebhookUrl] = useState(
-    "https://api.example.com/webhooks/user-registration/events"
-  );
-  const [path, setPath] = useState("/webhooks/user-registration/events");
+  const [webhookUrl, setWebhookUrl] = useState(process.env.NEXT_PUBLIC_API_URL);
+  const [path] = useState("webhooks/" + node.workflowId);
+  const [authCredentialId, setAuthCredentialId] = useState("");
 
-  const httpMethods = [
-    { value: "GET", label: "GET", enabled: true },
-    { value: "POST", label: "POST", enabled: true },
-    { value: "PUT", label: "PUT", enabled: false },
-    { value: "PATCH", label: "PATCH", enabled: false },
-    { value: "DELETE", label: "DELETE", enabled: false },
-  ];
+  const formatUrl = (url: string) => {
+    const copyToClipboard = async () => {
+      try {
+        await navigator.clipboard.writeText(url);
+        console.info("Copied URL:", url);
+      } catch (err) {
+        console.error("Failed to copy URL");
+      }
+    };
 
-  const authTypes = [
-    { value: "none", label: "None" },
-    { value: "bearer", label: "Bearer Token" },
-    { value: "api-key", label: "API Key" },
-    { value: "basic", label: "Basic Auth" },
-  ];
-
-  const formatUrl = (url) => {
-    if (url.length > 50) {
-      const parts = url.match(/.{1,50}/g);
-      return parts.map((part, index) => (
-        <div key={index} className={index > 0 ? "pl-4" : ""}>
-          {part}
+    return (
+      <div className="flex items-start gap-2">
+        <div className="break-words max-w-[300px] text-sm leading-snug whitespace-pre-wrap">
+          {url}
         </div>
-      ));
-    }
-    return url;
+        <button
+          onClick={copyToClipboard}
+          className="text-gray-500 hover:text-black"
+          title="Copy URL"
+        >
+          <Copy size={16} />
+        </button>
+      </div>
+    );
   };
 
+  useEffect(() => {
+    async function getHooks() {
+      const token = await getToken();
+      if (!token) return;
+      try {
+        const response = await getWebhook(token, node.workflowId);
+        if (response.details == "Webhook not found") {
+          console.log("webhook not found");
+        } else {
+          setHttpMethod(response.method || "GET");
+          setAuthType(response.auth_type || "none");
+          if (response.credentials) setAuthToken(response.credentials.name);
+          setAuthCredentialId(response.credential_id);
+          // setPath(response.path);
+        }
+        console.log("webhook get response", response);
+      } catch (error) {
+        console.log("error", error);
+      }
+    }
+    getHooks();
+  }, []);
+
+  const handleAuthTokenChange = (id) => {
+    setAuthCredentialId(id);
+  };
+
+  const handleSaveWebhookConfiguration = async () => {
+    const token = await getToken();
+    if (!token) return;
+    console.log("auth token", authToken);
+    const response = await createWebhook(token, node.workflowId, {
+      method: httpMethod,
+      auth_type: authType,
+      ...(authCredentialId && { credential_id: authCredentialId }),
+      path,
+    });
+    console.log("webhook get response", response);
+  };
+  console.log("+++++++++++++++++++++++", authCredentialId, authToken);
   return (
     <DetailsModal setSelectedNode={setSelectedNode}>
       <WorkflowJSON node={node} type="input" />
@@ -87,7 +143,7 @@ export default function WebhookDetails({ setSelectedNode, node }) {
                   {httpMethod}
                 </Badge>
                 <div className="flex-1 text-sm font-mono text-muted-foreground break-words">
-                  {formatUrl(webhookUrl)}
+                  {formatUrl(webhookUrl + path + "/events")}
                 </div>
               </div>
             </div>
@@ -159,8 +215,14 @@ export default function WebhookDetails({ setSelectedNode, node }) {
             {/* Auth Token Section - Only show if auth type is not 'none' */}
             {authType !== "none" && (
               <div className="space-y-2">
-                <ComboboxDemo />
-                <div className="relative">
+                <AuthCredentials
+                  {...{
+                    authToken: authCredentialId,
+                    setAuthToken,
+                    onChange: handleAuthTokenChange,
+                  }}
+                />
+                {/* <div className="relative">
                   <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1">
                     <Button
                       type="button"
@@ -187,13 +249,17 @@ export default function WebhookDetails({ setSelectedNode, node }) {
                       </Button>
                     )}
                   </div>
-                </div>
+                </div> */}
               </div>
             )}
 
             {/* Action Buttons */}
             <div className="flex gap-2 pt-4">
-              <Button className="flex-1" size="sm">
+              <Button
+                className="flex-1"
+                size="sm"
+                onClick={handleSaveWebhookConfiguration}
+              >
                 Save Configuration
               </Button>
               <Button

@@ -32,6 +32,7 @@ export interface FlowState {
   allProjects: Project[];
   templates: Project[];
   draggingNodeType?: string;
+  needsSave: boolean;
 }
 
 export type FlowActions = {
@@ -52,4 +53,5 @@ export type FlowActions = {
   removeNodeFromFlow: (nodeId: string) => void;
   addEdgeToFlow: (edges: Edge[]) => void;
   removeEdgeFromFlow: (edgeId: string) => void;
+  save: () => void;
 };
