@@ -303,3 +303,42 @@ export const deleteWebhook = async (token: string, workflowId: string) => {
   });
   return response.status;
 };
+
+export const handleTestNode = async (workflowId, state) => {
+  const EndPoint =
+    process.env.NEXT_PUBLIC_API_URL + "excecutor/" + workflowId + "/test";
+  const response = await fetch(EndPoint, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      // Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify(state),
+  });
+  return await response.json();
+};
+
+export const executeWorkflow = async (token: string, workflowId: string) => {
+  console.log({ token, workflowId });
+  const EndPoint = process.env.NEXT_PUBLIC_API_URL + "excecutor/" + workflowId;
+  const response = await fetch(EndPoint, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+  });
+  return await response.json();
+};
+
+export const getWorkflow = async (token: string, workflowId: string) => {
+  const EndPoint = process.env.NEXT_PUBLIC_API_URL + "workflow/" + workflowId;
+  const response = await fetch(EndPoint, {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+  });
+  return await response.json();
+};

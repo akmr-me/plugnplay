@@ -29,6 +29,8 @@ import WorkflowJSON from "./WorkflowJSON";
 import { useAuth, useUser } from "@clerk/nextjs";
 import AuthCredentials from "@/components/AuthCredentials";
 import { useReactFlow } from "@xyflow/react";
+import { handleTestNode } from "@/service/node";
+import { toast } from "sonner";
 
 export default function OpenAIDetails({ setSelectedNode, node }) {
   const { getToken } = useAuth();
@@ -45,7 +47,7 @@ export default function OpenAIDetails({ setSelectedNode, node }) {
   //   const [maxTokens, setMaxTokens] = useState(1000);
   //   const [showApiKey, setShowApiKey] = useState(false);
   const [systemPrompt, setSystemPrompt] = useState(
-    node.data.state?.systemPrompt || ""
+    node.data.state?.system_prompt || ""
   );
   const [responseFormat, setResponseFormat] = useState(
     node.data.state?.responseFormat || "json"
@@ -110,23 +112,24 @@ export default function OpenAIDetails({ setSelectedNode, node }) {
     const token = await getToken();
     if (!token) return;
 
-    const state = {
-      credential_id: credentialId,
-      description,
-      model,
-      prompt,
-      systemPrompt,
-      responseFormat,
-    };
-    updateNodeData(node.id, {
-      ...node.data,
-      state: state,
-    });
-
     try {
-      console.log("Saving OpenAI configuration:", state);
+      const state = {
+        credential_id: credentialId,
+        description,
+        model,
+        prompt,
+        system_prompt: systemPrompt,
+        response_format: responseFormat,
+      };
+      updateNodeData(node.id, {
+        ...node.data,
+        state: state,
+      });
+      toast.info("OpenAI configuration saved successfully!");
     } catch (error) {
-      console.error("Error saving OpenAI config:", error);
+      toast.error("Error saving OpenAI config:", {
+        description: error.message,
+      });
     }
   };
 
@@ -136,7 +139,9 @@ export default function OpenAIDetails({ setSelectedNode, node }) {
 
     try {
       // Replace with your actual test API call
-      console.log("Testing OpenAI configuration...");
+      const resposne = await handleTestNode(node.workflowId, node.data.state);
+      updateNodeData(node.id, { ...node.data, output: resposne });
+      console.log("Testing OpenAI configuration...", response);
     } catch (error) {
       console.error("Error testing OpenAI config:", error);
     }

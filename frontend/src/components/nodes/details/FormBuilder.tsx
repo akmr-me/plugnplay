@@ -330,7 +330,7 @@ const FormBuilder = ({
 
                   {/* Field Editors */}
                   <div className="space-y-4">
-                    {fields.length === 0 ? (
+                    {fields?.length === 0 ? (
                       <Card className="border-dashed">
                         <CardContent className="flex flex-col items-center justify-center py-8">
                           <Plus className="h-8 w-8 text-muted-foreground mb-2" />
