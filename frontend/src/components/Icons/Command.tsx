@@ -1,3 +1,4 @@
+"use client";
 import { CommandIcon } from "lucide-react";
 import { Button } from "../ui/button";
 

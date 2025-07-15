@@ -1,32 +1,8 @@
+"use client";
 import React, { useEffect, useState } from "react";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-  DialogFooter,
-} from "@/components/ui/dialog";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import {
-  Eye,
-  EyeOff,
-  Key,
-  Shield,
-  User,
-  Globe,
-  RefreshCcw,
-} from "lucide-react";
+import { Key, Shield, User, Globe, RefreshCcw } from "lucide-react";
 import { getAllCredential } from "@/service/node";
 import { useAuth, useUser } from "@clerk/nextjs";
 import CredentialCard from "./Card";

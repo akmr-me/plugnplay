@@ -1,3 +1,4 @@
+"use client";
 import { Download, Play, Rss } from "lucide-react";
 import { Button } from "../ui/button";
 import { useReactFlow } from "@xyflow/react";

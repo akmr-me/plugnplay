@@ -1,7 +1,6 @@
 "use client";
 import { TriggerNode } from "@/data/nodes";
 import { SidebarInput } from "../ui/sidebar";
-import TriggerNToolsDescription from "./TriggerNToolsDescription";
 import { useState } from "react";
 import { Search } from "lucide-react";
 import { Label } from "../ui/label";

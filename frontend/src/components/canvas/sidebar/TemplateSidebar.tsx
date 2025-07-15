@@ -1,3 +1,4 @@
+"use client";
 import { useFlowActions, useFlowSelectors } from "@/stores";
 import React from "react";
 import {

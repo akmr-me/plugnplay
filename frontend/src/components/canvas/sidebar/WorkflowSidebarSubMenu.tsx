@@ -1,3 +1,4 @@
+"use client";
 import { SidebarMenuSub, SidebarMenuSubItem } from "@/components/ui/sidebar";
 import CreateProject from "./CreateProject";
 import { Separator } from "@/components/ui/separator";

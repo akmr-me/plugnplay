@@ -1,3 +1,4 @@
+"use client";
 import { Note } from "@/components/Note";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -77,6 +78,7 @@ function WorkflowInput({ node, type, shouldRender }: WorkflowInput) {
             enableClipboard={(item) => {
               const path = item.path;
               const copyText = `"{{ $${path.join(".")} }}"`;
+              if (typeof navigator === "undefined") return "unknown";
               navigator.clipboard.writeText(copyText);
               return "amresh";
             }}

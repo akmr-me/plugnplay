@@ -1,3 +1,4 @@
+"use client";
 import React, { useState } from "react";
 import {
   SidebarGroup,
@@ -16,41 +17,41 @@ import CredentialManager from "@/components/credential/Manager";
 import { Dialog } from "@/components/ui/dialog";
 import Link from "next/link";
 
-const isMac = navigator.userAgent.toLowerCase().includes("mac");
-const ICON = () => (isMac ? <Command /> : <Ctrl />);
-const SettingsItems = {
-  "Auto Save": (
-    <div className="flex items-center gap-1">
-      <Switch />
-    </div>
-  ),
-  "Canvas Theme": (
-    <div className="flex items-center gap-1">
-      <ICON /> + I
-    </div>
-  ),
-  "Show Mini Map": (
-    <div className="flex items-center gap-1">
-      <ICON /> + M
-    </div>
-  ),
-  "Show Panel": (
-    <div className="flex items-center gap-1">
-      <ICON /> + O
-    </div>
-  ),
-  Credentails: (
-    <div className="flex items-center gap-1">
-      🗝️
-      {/* <Show /> */}
-      <Link href="/canvas/credential" className="flex items-center gap-1">
-        Add
-      </Link>
-    </div>
-  ),
-};
-
 export default function SettingsSidebar() {
+  // const isMac = navigator.userAgent.toLowerCase().includes("mac");
+  // const ICON = () => (isMac ? <Command /> : <Ctrl />);
+  const ICON = () => <Command />;
+  const SettingsItems = {
+    "Auto Save": (
+      <div className="flex items-center gap-1">
+        <Switch />
+      </div>
+    ),
+    "Canvas Theme": (
+      <div className="flex items-center gap-1">
+        <ICON /> + I
+      </div>
+    ),
+    "Show Mini Map": (
+      <div className="flex items-center gap-1">
+        <ICON /> + M
+      </div>
+    ),
+    "Show Panel": (
+      <div className="flex items-center gap-1">
+        <ICON /> + O
+      </div>
+    ),
+    Credentails: (
+      <div className="flex items-center gap-1">
+        🗝️
+        {/* <Show /> */}
+        <Link href="/canvas/credential" className="flex items-center gap-1">
+          Add
+        </Link>
+      </div>
+    ),
+  };
   return (
     <SidebarGroup key={"Settings"} className="mt-4">
       <SidebarGroupLabel className="sidebar-group-label flex justify-between">

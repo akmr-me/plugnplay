@@ -1,3 +1,4 @@
+"use client";
 import { SVGProps } from "react";
 
 export function Sleep(props: SVGProps<SVGSVGElement>) {

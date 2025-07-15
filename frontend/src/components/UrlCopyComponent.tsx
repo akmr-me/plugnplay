@@ -1,3 +1,4 @@
+"use client";
 import React, { useState } from "react";
 import { Copy, Check, ExternalLink } from "lucide-react";
 
@@ -10,6 +11,7 @@ const UrlCopyComponent = ({
 
   const handleCopy = async () => {
     try {
+      if (typeof navigator === "undefined") return "unknown";
       await navigator.clipboard.writeText(url);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);

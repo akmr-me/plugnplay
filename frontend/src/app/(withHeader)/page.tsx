@@ -1,3 +1,4 @@
+"use client";
 import Accordion from "@/components/landing/Accordion";
 import FeatureCard from "@/components/landing/FeatureCard";
 import TestimonialCard from "@/components/landing/TestimonialCard";

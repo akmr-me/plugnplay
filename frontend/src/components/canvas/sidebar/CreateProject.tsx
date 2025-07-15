@@ -1,3 +1,4 @@
+"use client";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -11,7 +12,6 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { createNewFlow } from "@/lib/flow";
 import {
   createNewProject,
   createNewWorkflow,
@@ -39,7 +39,8 @@ export default function CreateProject({
   const { getToken } = useAuth();
   const { user } = useUser();
 
-  const { addProject, addFlow,setCurrentFlow,setCurrentProject } = useFlowActions();
+  const { addProject, addFlow, setCurrentFlow, setCurrentProject } =
+    useFlowActions();
   const { allProjects } = useFlowSelectors();
 
   const handleCreateNewProject = async () => {
@@ -79,7 +80,7 @@ export default function CreateProject({
       );
       // newProject.flows.push(newWorkflow);
       console.log("create new workflow", newWorkflow);
-      setCurrentFlow(newWorkflow)
+      setCurrentFlow(newWorkflow);
     }
     setWorkflowName("");
     const projects = await fetchAllProjects(token, user?.id);
@@ -89,15 +90,11 @@ export default function CreateProject({
     setOpen(false);
   };
 
-console.log({allProjects}) 
-
+  console.log({ allProjects });
 
   const handleAddFlow = async () => {
     if (!projectName || !workflowName) return;
-    if (
-      workflowName.length < 3 ||
-      workflowName.length > 20 
-    ) {
+    if (workflowName.length < 3 || workflowName.length > 20) {
       alert("Workflow name must be between 3 and 20 characters.");
       return;
     }
@@ -105,8 +102,13 @@ console.log({allProjects})
     const token = await getToken();
     if (!token || !user?.id || !projectId) return;
 
-    const newFlow = await createNewWorkflow(token,workflowName,user?.id,projectId)
-    console.log('workflow',newFlow)
+    const newFlow = await createNewWorkflow(
+      token,
+      workflowName,
+      user?.id,
+      projectId
+    );
+    console.log("workflow", newFlow);
     addFlow(newFlow);
     // setCurrentFlow(newFlow)
     setWorkflowName("");
@@ -190,4 +192,4 @@ console.log({allProjects})
       </DialogContent>
     </Dialog>
   );
-
+}

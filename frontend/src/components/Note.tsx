@@ -1,3 +1,4 @@
+"use client";
 export function Note({ children }) {
   return (
     <div className="bg-gray-50 border-l-4 border-l-gray-400 p-3 my-4">

@@ -1,3 +1,4 @@
+"use client";
 import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -390,9 +391,11 @@ export default function HttpRequestDetals({
                           variant="ghost"
                           size="sm"
                           className="h-6 w-6 p-0"
-                          onClick={() =>
-                            navigator.clipboard.writeText(authToken)
-                          }
+                          onClick={() => {
+                            if (typeof navigator === "undefined")
+                              return "unknown";
+                            navigator.clipboard.writeText(authToken);
+                          }}
                         >
                           <Copy className="h-3 w-3" />
                         </Button>

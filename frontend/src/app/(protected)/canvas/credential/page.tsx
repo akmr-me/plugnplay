@@ -1,5 +1,11 @@
 "use client";
-import CredentialManager from "@/components/credential/Manager";
+import dynamic from "next/dynamic";
+const CredentialManager = dynamic(
+  () => import("@/components/credential/Manager"),
+  {
+    ssr: false,
+  }
+);
 
 export default function Page() {
   return (

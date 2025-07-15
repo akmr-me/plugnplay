@@ -1,3 +1,4 @@
+"use client";
 import { CREDENTIAL_TYPES } from "@/constants";
 import { Card, CardContent } from "../ui/card";
 import { Edit2, Trash2 } from "lucide-react";

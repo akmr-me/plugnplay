@@ -1,3 +1,4 @@
+"use client";
 import { Dialog, DialogContent, DialogPortal } from "@/components/ui/dialog";
 
 export default function DetailsModal({ setSelectedNode, children }) {
