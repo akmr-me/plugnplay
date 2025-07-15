@@ -41,7 +41,11 @@ async def startup_event():
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000"],  # Specify allowed origins
+    allow_origins=[
+        "http://localhost:3000",
+        "https://plugnplay.cc",
+        "https://www.plugnplay.cc",
+    ],  # Specify allowed origins
     allow_credentials=True,
     allow_methods=["*"],  # Specify allowed methods
     allow_headers=["*"],

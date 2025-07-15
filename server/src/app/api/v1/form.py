@@ -319,6 +319,80 @@ async def submit_form(
     fields = {v.id: v.label for v in response.form.fields}
     final_response = {fields[v.field_id]: v.value for v in response.values}
     # print(final_response)
+    if current_user:
+        return final_response
+    # find workflow
+    workflow_read = await crud_workflows.get(
+        db=db, id=form_id, schema_to_select=WorkflowRead
+    )
+
+    compiled_graph = WorkflowGraphBuilder(workflow_read).build_graph()
+    # print("----------------------fnal response passed")
+    result = await compiled_graph.ainvoke(
+        {
+            "input": {"form-trigger": final_response},
+            "state": {
+                "nodes": {node["id"]: node for node in workflow_read["nodes"]},
+                "edges": {edge["id"]: edge for edge in workflow_read["edges"]},
+            },
+        }
+    )
+    # print("restul", result)
+
+    # Check if user from app then send response else trigger graph
+
+    # Invoke graph with state
+
+    return {"message": "Form submitted"}
+
+
+@router.post("/test/submit/form/{form_id}")
+async def test_submit_form(
+    form_id: str,
+    request: Request,
+    db: Annotated[AsyncSession, Depends(async_get_db)],
+    current_user: Annotated[dict, Depends(get_optional_user)],
+):
+    """Handle form submission"""
+
+    form = await crud_forms.get(db=db, id=form_id, schema_to_select=FormRead)
+
+    if form is None:
+        raise NotFoundException("Form not found")
+
+    # Get the JSON data from the request
+    form_data = await request.json()
+    # Create a response
+    form_response_internal = FormResponseCreateInternal(form_id=form_id)
+    form_response = await crud_form_responses.create(
+        db=db, object=form_response_internal
+    )
+
+    # Create from_response_value
+    for key, value in form_data.items():
+        form_response_value = FormResponseValueCreateInternal(
+            response_id=str(form_response.id), field_id=key, value=value
+        )
+        await crud_form_response_values.create(db=db, object=form_response_value)
+    # form_response_values =
+
+    stmt = (
+        select(FormResponse)
+        .where(FormResponse.id == form_response.id)
+        .options(
+            selectinload(FormResponse.values),
+            selectinload(FormResponse.form).selectinload(Form.fields),
+        )
+    )
+    result = await db.execute(stmt)
+    response = result.scalar_one_or_none()
+
+    if response is None:
+        raise NotFoundException("Response not found")
+
+    fields = {v.id: v.label for v in response.form.fields}
+    final_response = {fields[v.field_id]: v.value for v in response.values}
+    # print(final_response)
 
     # find workflow
     workflow_read = await crud_workflows.get(

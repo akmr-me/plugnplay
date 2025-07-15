@@ -24,10 +24,10 @@ class User(Base):
         unique=True,
     )
 
-    full_name: Mapped[str] = mapped_column(String(30))
     # username: Mapped[str] = mapped_column(String(20), unique=True, index=True)
     email: Mapped[str] = mapped_column(String(50), unique=True, index=True)
     user_id: Mapped[str] = mapped_column(String(100), unique=True, index=True)
+    full_name: Mapped[str] = mapped_column(String(30), default="")
 
     image_url: Mapped[str] = mapped_column(
         String, default="https://profileimageurl.com"

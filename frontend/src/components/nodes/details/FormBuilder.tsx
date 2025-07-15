@@ -315,7 +315,7 @@ const FormBuilder = ({
                   <div className="space-y-3">
                     <Label className="text-sm font-medium">Add Field</Label>
                     <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
-                      {fieldTypes.map(({ type, label, icon: Icon }) => (
+                      {fieldTypes?.map(({ type, label, icon: Icon }) => (
                         <Button
                           key={type}
                           onClick={() => addField(type)}
@@ -331,7 +331,7 @@ const FormBuilder = ({
 
                   {/* Field Editors */}
                   <div className="space-y-4">
-                    {fields?.length === 0 ? (
+                    {!fields?.length ? (
                       <Card className="border-dashed">
                         <CardContent className="flex flex-col items-center justify-center py-8">
                           <Plus className="h-8 w-8 text-muted-foreground mb-2" />
@@ -357,7 +357,7 @@ const FormBuilder = ({
               ) : (
                 /* Preview Mode */
                 <div className="space-y-6">
-                  {fields.length === 0 ? (
+                  {!fields?.length ? (
                     <p className="text-muted-foreground text-center py-8">
                       No fields to display. Switch to edit mode to add fields.
                     </p>

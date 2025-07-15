@@ -50,6 +50,18 @@ class LoginRequest(BaseModel):
     createdAt: datetime
 
 
+class UserResponse(BaseModel):
+    id: str
+    email: str
+    fullname: Optional[str] = None
+    image_url: str | None = None
+
+
+class LoginSuccessResponse(BaseModel):
+    message: str
+    user: UserResponse
+
+
 security = HTTPBearer()
 
 
@@ -106,15 +118,15 @@ async def login_with_provider_data(
         db=db,
     )
 
-    return {
-        "message": "User login successful",
-        "user": {
-            "id": user.id,
-            "email": user.email,
-            "full_name": user.full_name,
-            "image_url": user.image_url,
-        },
-    }
+    return LoginSuccessResponse(
+        message="User login successful",
+        user=UserResponse(
+            id=user.id,
+            email=user.email,
+            full_name=user.full_name,
+            image_url=user.image_url,
+        ),
+    )
 
 
 @router.post("/refresh")

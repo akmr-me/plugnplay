@@ -38,6 +38,8 @@ USER app
 
 # Set the working directory
 WORKDIR /code
+# ✅ Create logs directory with correct permissions
+RUN mkdir -p /code/app/logs && chown -R app:app /code/app/logs
 
 # COPY the alembic.ini and alembic/ directory from the builder stage to /code
 # This is crucial. Assumes they were copied to /app in the builder stage.
