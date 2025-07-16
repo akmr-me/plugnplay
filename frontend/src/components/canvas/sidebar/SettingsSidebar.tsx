@@ -1,5 +1,5 @@
 "use client";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   SidebarGroup,
   SidebarGroupContent,
@@ -18,9 +18,12 @@ import { Dialog } from "@/components/ui/dialog";
 import Link from "next/link";
 
 export default function SettingsSidebar() {
-  // const isMac = navigator.userAgent.toLowerCase().includes("mac");
-  // const ICON = () => (isMac ? <Command /> : <Ctrl />);
-  const ICON = () => <Command />;
+  const [isMac, setIsMac] = useState(false);
+  useEffect(() => {
+    setIsMac(navigator.userAgent.toLowerCase().includes("mac"));
+  }, []);
+  const ICON = () => (isMac ? <Command /> : <Ctrl />);
+  // const ICON = () => <Ctrl />;
   const SettingsItems = {
     "Auto Save": (
       <div className="flex items-center gap-1">
@@ -52,6 +55,7 @@ export default function SettingsSidebar() {
       </div>
     ),
   };
+
   return (
     <SidebarGroup key={"Settings"} className="mt-4">
       <SidebarGroupLabel className="sidebar-group-label flex justify-between">

@@ -18,7 +18,7 @@ export default function PlayNPublishButtonGroup() {
   const { getNodes, getEdges, getViewport } = useReactFlow();
   const { currentFlow, currentProject, needsSave } = useFlowSelectors();
   const { saveWorkflow, setCurrentFlow } = useFlowActions();
-
+  console.log({ needsSave });
   const handleSaveWorkFlow = async () => {
     const token = await getToken();
     if (!token || !user?.id || !currentFlow || !currentProject) return;
@@ -58,6 +58,7 @@ export default function PlayNPublishButtonGroup() {
       );
       if (!userConfirmation) return;
     }
+    saveWorkflow();
     await executeWorkflow(token, currentFlow?.id);
   };
 
