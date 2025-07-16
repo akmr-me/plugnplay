@@ -18,23 +18,23 @@ export const initialNodes: AppNode[] = [
 const initialEdges = [] satisfies Edge[];
 
 const initialFlows: Flow[] = [
-  {
-    id: "starter-flow",
-    name: "Initial Flow",
-    description: "This is the initial flow.",
-    nodes: initialNodes,
-    edges: initialEdges,
-    viewport: { x: 0, y: 0, zoom: 0 },
-  },
+  // {
+  //   id: "starter-flow",
+  //   name: "Initial Flow",
+  //   description: "This is the initial flow.",
+  //   nodes: initialNodes,
+  //   edges: initialEdges,
+  //   viewport: { x: 0, y: 0, zoom: 0 },
+  // },
 ];
 
 export const initialProjects: Project[] = [
-  {
-    id: "starter-project",
-    name: "Starter Project",
-    description: "This is the starter project.",
-    flows: initialFlows,
-  },
+  // {
+  //   id: "starter-project",
+  //   name: "Starter Project",
+  //   description: "This is the starter project.",
+  //   flows: initialFlows,
+  // },
 ];
 
 const defaultFlow: FlowState = {

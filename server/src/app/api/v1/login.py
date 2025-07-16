@@ -42,7 +42,7 @@ class LoginSuccessResponse(BaseModel):
 
 
 class LoginRequest(BaseModel):
-    fullname: str
+    fullname: Optional[str] = None
     id: str
     imageUrl: Optional[str] = None
     lastSignInAt: datetime
@@ -121,7 +121,7 @@ async def login_with_provider_data(
     return LoginSuccessResponse(
         message="User login successful",
         user=UserResponse(
-            id=user.id,
+            id=user.user_id,
             email=user.email,
             full_name=user.full_name,
             image_url=user.image_url,

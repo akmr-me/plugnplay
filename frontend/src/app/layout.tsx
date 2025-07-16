@@ -62,6 +62,15 @@ export default function RootLayout({
       }}
     >
       <html lang="en" suppressHydrationWarning>
+        <head>
+          <script
+            async
+            src={"https://analytics.plugnplay.cc/tracker.js"}
+            data-ackee-server="https://analytics.plugnplay.cc"
+            data-ackee-domain-id="24964168-052c-465e-9ff8-38978c16cb90"
+            data-ackee-opts='{ "detailed": true }'
+          ></script>
+        </head>
         <body
           className={`${geistSans.variable} ${geistMono.variable} antialiased`}
         >

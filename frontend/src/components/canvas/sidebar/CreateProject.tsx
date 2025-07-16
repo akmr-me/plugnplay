@@ -20,24 +20,28 @@ import {
 import { useFlowActions, useFlowSelectors } from "@/stores";
 import { Flow, Project } from "@/types";
 import { useAuth, useUser } from "@clerk/nextjs";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 type CreateProjectProps = {
   projectName?: string;
   isCreateProject?: boolean;
   projectId?: string;
+  getAllFlows?: () => void;
 };
 
 export default function CreateProject({
   projectName: projectNameProp,
   isCreateProject = true,
   projectId,
+  getAllFlows,
 }: CreateProjectProps) {
   const [projectName, setProjectName] = useState(projectNameProp || "");
   const [workflowName, setWorkflowName] = useState("");
   const [open, setOpen] = useState(false);
   const { getToken } = useAuth();
   const { user } = useUser();
+  const router = useRouter();
 
   const { addProject, addFlow, setCurrentFlow, setCurrentProject } =
     useFlowActions();
@@ -64,12 +68,15 @@ export default function CreateProject({
       return;
     }
     const token = await getToken();
+    let route: string = "/canvas/";
     if (!token || !user?.id) return;
     const newProject: Project = await createNewProject(
       token,
       projectName,
       user?.id
     );
+    route += "project/" + newProject.id;
+    setCurrentProject(newProject);
     console.log("created project", newProject);
     if (workflowName) {
       const newWorkflow: Flow = await createNewWorkflow(
@@ -81,6 +88,7 @@ export default function CreateProject({
       // newProject.flows.push(newWorkflow);
       console.log("create new workflow", newWorkflow);
       setCurrentFlow(newWorkflow);
+      route += "/flow/" + newWorkflow.id;
     }
     setWorkflowName("");
     const projects = await fetchAllProjects(token, user?.id);
@@ -88,9 +96,8 @@ export default function CreateProject({
     addProject(projects?.data);
     // setCurrentFlow(newProject)
     setOpen(false);
+    router.push(route);
   };
-
-  console.log({ allProjects });
 
   const handleAddFlow = async () => {
     if (!projectName || !workflowName) return;
@@ -113,6 +120,8 @@ export default function CreateProject({
     // setCurrentFlow(newFlow)
     setWorkflowName("");
     setOpen(false);
+    router.push("/canvas/project/" + projectId + "/flow/" + newFlow.id);
+    // if (typeof getAllFlows == "function") getAllFlows();
   };
 
   return (

@@ -98,15 +98,16 @@ export default function WorkflowSidebarSubMenu({
   const getAllFlows = async () => {
     const token = await getToken();
     if (!token || !user?.id) return;
+    console.log("geall flow called");
     const response = await getAllFlowsInProject(token, user?.id, project.id);
-    if (response.data.length)
-      setFlows(response.data.map((flow) => ({ ...flow, title: flow.name })));
+
+    setFlows(response.data.map((flow) => ({ ...flow, title: flow.name })));
     console.log(response);
   };
   useEffect(() => {
     console.log("console.log");
     if (isSignedIn) getAllFlows();
-  }, [project.id, params.projectId, isSignedIn]);
+  }, [project.id, params.projectId, isSignedIn, params.flowId]);
 
   return (
     <SidebarMenuSub className="" key={"project" + project.id}>
@@ -116,6 +117,7 @@ export default function WorkflowSidebarSubMenu({
           projectName={project.title}
           projectId={project.id}
           key={project.id}
+          getAllFlows={getAllFlows}
         />
         {flows?.length === 0 && (
           <>
