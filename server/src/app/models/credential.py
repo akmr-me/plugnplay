@@ -17,6 +17,7 @@ from app.core.db.database import Base
 
 class CredentialType(str, PyEnum):
     BEARER = "bearer-token"
+    CUSTOM = "custom-token"
     API_KEY = "api-key"
     BASIC = "basic-auth"
     GOOGLE_OAUTH = "google-oauth"
@@ -40,6 +41,7 @@ class Credential(Base):
 
     # Optional fields depending on type
     bearer_token: Mapped[str | None] = mapped_column(String, nullable=True)
+    custom_token: Mapped[str | None] = mapped_column(String, nullable=True)
 
     api_key_name: Mapped[str | None] = mapped_column(
         String, nullable=True

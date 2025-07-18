@@ -13,7 +13,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Eye, EyeOff, Copy, TestTube, Globe, Trash2, Plus } from "lucide-react";
+import { TestTube, Globe, Trash2, Plus } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import DetailsModal from "./Modal";
 import WorkflowJSON, { getInputOrOutPutData } from "./WorkflowJSON";
@@ -24,12 +24,14 @@ import { formURLFromQueryString } from "@/lib/utils";
 import { WorkflowTemplateParser } from "@/lib/parser";
 import httpRequest from "@/lib/executors/httpRequestTool";
 import { DetailsModalProps } from "@/types";
+import AuthCredentials from "@/components/AuthCredentials";
+import { toast } from "sonner";
 
 // Define the expected shape for node.data.state
 type HttpRequestNodeState = {
   httpMethod?: string;
   authType?: string;
-  authToken?: string;
+  credentialId?: string;
   showToken?: boolean;
   url?: string;
   includeBody?: boolean;
@@ -73,7 +75,9 @@ export default function HttpRequestDetals({
   const [authType, setAuthType] = useState(
     node.data?.state?.authType || "none"
   );
-  const [authToken, setAuthToken] = useState(node.data?.state?.authToken || "");
+  const [credentialId, setCredentialId] = useState(
+    node.data?.state?.credentialId || ""
+  );
   const [showToken, setShowToken] = useState(
     node.data?.state?.showToken || false
   );
@@ -153,7 +157,6 @@ export default function HttpRequestDetals({
     field: "key" | "value" | "enabled",
     value: unknown
   ) => {
-    console.log({ field, value, index });
     if (!url) {
       alert("Please enter a url!");
       return;
@@ -192,7 +195,7 @@ export default function HttpRequestDetals({
           ...node.data,
           state: {
             httpMethod,
-            authToken,
+            credentialId,
             authType,
             showToken,
             includeBody,
@@ -219,7 +222,7 @@ export default function HttpRequestDetals({
     setDisableConfigSaving(false);
   }, [
     httpMethod,
-    authToken,
+    credentialId,
     authType,
     showToken,
     includeBody,
@@ -241,7 +244,7 @@ export default function HttpRequestDetals({
         ...node.data,
         state: {
           httpMethod,
-          authToken,
+          credentialId,
           authType,
           showToken,
           includeBody,
@@ -254,7 +257,10 @@ export default function HttpRequestDetals({
         },
       });
     } catch (error) {
-      console.log("Error while saving http configuration", error, { node });
+      toast.error("Error saving http configuration:", {
+        description: error.message,
+      });
+      // console.log("Error while saving http configuration", error, { node });
     }
   };
 
@@ -359,49 +365,10 @@ export default function HttpRequestDetals({
               {/* Auth Token Section - Only show if auth type is not 'none' */}
               {authType !== "none" && (
                 <div className="space-y-2">
-                  <Label htmlFor="auth-token" className="text-sm font-medium">
-                    Authentication Token
-                  </Label>
-                  <div className="relative">
-                    <Input
-                      id="auth-token"
-                      type={showToken ? "text" : "password"}
-                      value={authToken}
-                      onChange={(e) => setAuthToken(e.target.value)}
-                      placeholder="Paste your token here..."
-                      className="pr-20"
-                    />
-                    <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1">
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        className="h-6 w-6 p-0"
-                        onClick={() => setShowToken(!showToken)}
-                      >
-                        {showToken ? (
-                          <EyeOff className="h-3 w-3" />
-                        ) : (
-                          <Eye className="h-3 w-3" />
-                        )}
-                      </Button>
-                      {authToken && (
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          className="h-6 w-6 p-0"
-                          onClick={() => {
-                            if (typeof navigator === "undefined")
-                              return "unknown";
-                            navigator.clipboard.writeText(authToken);
-                          }}
-                        >
-                          <Copy className="h-3 w-3" />
-                        </Button>
-                      )}
-                    </div>
-                  </div>
+                  <AuthCredentials
+                    authToken={credentialId}
+                    setAuthToken={setCredentialId}
+                  />
                 </div>
               )}
 

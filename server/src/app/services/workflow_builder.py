@@ -9,6 +9,7 @@ from typing import TypedDict, Any
 from enum import Enum
 from app.services.workflow_template_parser import WorkflowTemplateParser
 from app.services.openai_agent import structure_invocation
+from app.services.send_custom_http_request import send_custom_http_request
 
 
 def with_node_id(func, node_id):
@@ -26,7 +27,7 @@ def with_node_id(func, node_id):
         return sync_wrapper
 
 
-class NodeType(Enum):
+class NodeType(str, Enum):
     NEW_FLOW = "new-flow"
     MANUAL_TRIGGER = "manual-trigger"
     SCHEDULE_TRIGGER = "schedule-trigger"
@@ -43,6 +44,7 @@ class NodeType(Enum):
     NOTION_OTHER_TOOLS = "notion-other-tool"
     SLEEP_OTHER_TOOLS = "sleep-other-tool"
     CONDITIONAL_OTHER_TOOLS = "conditional-other-tool"
+    TEXT_OTHER_TOOLS = "text-other-tool"
 
 
 class WorkflowState(TypedDict, total=False):
@@ -54,36 +56,48 @@ class WorkflowState(TypedDict, total=False):
 # === Example Node Logic Functions ===
 async def form_trigger_node(state: dict, node_id: str) -> dict:
     # print("Running Form Trigger Node")
-    state["form_trigger"] = "Triggered with data: " + str(state.get("input", {}))
+    state[NodeType.FORM_TRIGGER] = "Triggered with data: " + str(state.get("input", {}))
     # print("state from form trigger", state)
     return state
 
 
 async def open_ai_tool_node(state: dict, node_id: str) -> dict:
-    # Datat to decrypt
     parser = WorkflowTemplateParser()
     template = state["state"]["nodes"][node_id]["data"]["state"]
-    # print("-------------template-------------------")
-    # print(template)
-    # print("---------------context-----------------")
-    # print("state nput", state["input"])
-    # print("--------------------------------")
     parsed_data = parser.parse_templates(template, state["input"])
-    # print()
-    # print()
-    # print("parsed+", parsed_data)
-    # print()
-    # print()
     response = await structure_invocation(parsed_data)
     # Get credential
     print("Running OpenAI Tool Node")
     state["open_ai_tool"] = "Generated result from: " + str(
         state.get("form_trigger", "")
     )
-    state["input"]["open-ai-tool"] = response
-    # print("********************************")
-    # print(state["input"]["open-ai-tool"])
-    # print("********************************")
+    state["input"][NodeType.OPEN_AI_TOOLS] = response
+    return state
+
+
+async def http_programming_tool_node(state: dict, node_id: str) -> dict:
+    parser = WorkflowTemplateParser()
+    # print("Running HTTP Programming Tool Node")
+    # print()
+    # print()
+    template = state["state"]["nodes"][node_id]["data"]["state"]
+    parsed_data = parser.parse_templates(template, state["input"])
+    # print(parsed_data)
+    response = {"message": "Success"} | await send_custom_http_request(parsed_data)
+    # print("HTTP Response:", response)
+    # print()
+    # print()
+    state["input"][NodeType.HTTP_PROGRAMMING_TOOLS] = response
+    return state
+
+
+async def text_other_tool_node(state: dict, node_id: str) -> dict:
+    parser = WorkflowTemplateParser()
+    print("Running Text Other Tool Node")
+    template = state["state"]["nodes"][node_id]["data"]["state"]
+    parsed_data = parser.parse_templates(template, state["input"])
+
+    state["input"][NodeType.TEXT_OTHER_TOOLS] = parsed_data
     return state
 
 
@@ -91,6 +105,8 @@ async def open_ai_tool_node(state: dict, node_id: str) -> dict:
 NODE_FUNCTION_MAP: Dict[NodeType, Callable[[dict], dict]] = {
     NodeType.FORM_TRIGGER: form_trigger_node,
     NodeType.OPEN_AI_TOOLS: open_ai_tool_node,
+    NodeType.HTTP_PROGRAMMING_TOOLS: http_programming_tool_node,
+    NodeType.TEXT_OTHER_TOOLS: text_other_tool_node,
     # Add more mappings as you implement new node types
 }
 

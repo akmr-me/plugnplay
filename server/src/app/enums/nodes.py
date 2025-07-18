@@ -18,3 +18,4 @@ class NodeType(Enum):
     NotionOtherTools = ("notion-other-tool",)
     SleepOtherTools = ("sleep-other-tool",)
     ConditionalOtherTools = ("conditional-other-tool",)
+    TextOtherTools = ("text-other-tool",)

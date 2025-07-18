@@ -146,7 +146,7 @@ export default function OpenAIDetails({ setSelectedNode, node }) {
       console.error("Error testing OpenAI config:", error);
     }
   };
-  console.log({ node });
+
   return (
     <DetailsModal setSelectedNode={setSelectedNode}>
       <WorkflowJSON node={node} type="input" />

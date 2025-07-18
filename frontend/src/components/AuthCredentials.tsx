@@ -36,7 +36,7 @@ export function CustomCombobox({
       const token = await getToken();
       if (!token) return;
       const data = await getAllCredential(token, user.id);
-      console.log("tokens", { data });
+      // console.log("tokens", { data });
       setCredentialTypes(data);
     }
     credentialOptions();
@@ -58,7 +58,7 @@ export function CustomCombobox({
   );
 
   const handleSelect = (currentValue) => {
-    console.log("select current value", currentValue);
+    // console.log("select current value", currentValue);
     const selectedCredential = credentialTypes.find(
       (credential) => credential.id === currentValue
     );
@@ -73,7 +73,7 @@ export function CustomCombobox({
   };
 
   const handleAddCredential = () => {
-    console.log("Opening add credential modal");
+    // console.log("Opening add credential modal");
     setOpen(false);
     setSearchValue(""); // Clear search when adding
     if (onAddCredential) {
@@ -182,12 +182,11 @@ export default function AuthCredentials({ authToken, setAuthToken, onChange }) {
   const handleAuthTokenChange = (newValue) => {
     setAuthToken(newValue);
     onChange(newValue);
-    console.log("Auth token changed to:", newValue);
+    // console.log("Auth token changed to:", newValue);
   };
 
   const handleAddCredential = () => {
     setShowCredentialModal(true);
-    console.log("Opening credential modal...");
   };
 
   return (

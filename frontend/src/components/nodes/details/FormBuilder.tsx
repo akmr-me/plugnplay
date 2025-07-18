@@ -26,6 +26,11 @@ import { fieldTypes } from "@/constants";
 import FieldEditor from "./form/FieldEditor";
 import PreviewField from "./form/PreviewField";
 
+type FormState = {
+  formTitle?: string;
+  formDescription?: string;
+  [key: string]: unknown;
+};
 const FormBuilder = ({
   node,
   setSelectedNode,
@@ -38,11 +43,12 @@ const FormBuilder = ({
   const { updateNodeData } = useReactFlow();
   const [shouldRerender, setShouldRerender] = useState(false);
   const [isPreviewMode, setIsPreviewMode] = useState(false);
+
   const [formTitle, setFormTitle] = useState<string>(
-    (data.state?.formTitle as string) || "Untitled Form"
+    (data.state as FormState)?.formTitle || "Untitled Form"
   );
   const [formDescription, setFormDescription] = useState<string>(
-    (data.state?.formDescription as string) || ""
+    (data.state as FormState)?.formDescription || ""
   );
   const [fields, setFields] = useState<FieldType[]>(
     (data.fields as FieldType[]) || []
@@ -71,7 +77,6 @@ const FormBuilder = ({
 
   const validateForm = () => {
     const requiredFields = fields.filter((field) => field.required);
-    console.log("requiredFields", requiredFields, formResponses);
     const missingFields = requiredFields.filter((field) => {
       return (
         !formResponses[field.id] ||
@@ -80,10 +85,10 @@ const FormBuilder = ({
     });
     return missingFields;
   };
-  console.log("formResponses", formResponses);
+
   const handleSubmit = async () => {
     const missingFields = validateForm();
-    console.log({ missingFields });
+
     if (missingFields.length > 0) {
       alert(
         `Please fill in the following required fields: ${missingFields
@@ -94,7 +99,6 @@ const FormBuilder = ({
     }
 
     try {
-      console.log({ formResponses });
       const token = await getToken();
       if (!token) return;
       const response = await testSubmitForm(
@@ -102,8 +106,7 @@ const FormBuilder = ({
         node.workflowId,
         formResponses
       );
-      // const testFormData = await testSubmitForm(node.workflowId, formResponses);
-      console.log({ response });
+
       updateNodeData(node.id, { ...node.data, output: response });
       setShouldRerender((prev) => !prev);
     } catch (error) {
@@ -111,7 +114,6 @@ const FormBuilder = ({
     }
     alert("Form submitted successfully!" + node.id);
   };
-  console.log("node is updated", node);
 
   const closeDialog = (e: React.MouseEvent<HTMLElement>) => {
     e.stopPropagation();
@@ -121,7 +123,7 @@ const FormBuilder = ({
     }
   };
 
-  const debouncedUpdateForm = useDebounceCallback(updateFormTrigger, 400);
+  const debouncedUpdateForm = useDebounceCallback(updateFormTrigger, 1000);
 
   useEffect(() => {
     const updateForm = async () => {
@@ -138,16 +140,7 @@ const FormBuilder = ({
         node.workflowId,
         formDescription
       );
-      console.log(
-        "form",
-        { title, description, id },
-        {
-          fields: serverFields,
-          formDescription: description,
-          formTitle: title,
-          formId: node.workflowId,
-        }
-      );
+
       updateNodeData(id, {
         ...node.data,
         state: {
@@ -158,6 +151,8 @@ const FormBuilder = ({
         },
       });
       setFields(serverFields);
+      setFormDescription(description);
+      setFormTitle(title);
     };
     updateForm();
   }, []);

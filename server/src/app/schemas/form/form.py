@@ -26,7 +26,19 @@ class FormRead(FormBase):
     title: str
     description: str
     # fields: Optional[list[FormFieldCreate]] = Field(default=None, exclude=True)
-    fields: List[FormFieldRead] = []  # ✅ Include this
+    # fields: List[FormFieldRead] = []  # ✅ Include this
+    fields: Optional[List[FormFieldRead]] = None
+
+    class Config:
+        from_attributes = True
+
+
+class FormReadPatch(FormBase):
+    id: UUID
+    workflow_id: UUID
+    created_at: datetime
+    title: str
+    description: str
 
     class Config:
         from_attributes = True

@@ -3,12 +3,10 @@
 import Flow from "./Flow";
 import { useFlowSelectors } from "@/stores";
 import CreateProject from "./sidebar/CreateProject";
-import { useParams } from "next/navigation";
 
 export default function Canvas() {
-  const params = useParams();
   const { currentFlow, currentProject } = useFlowSelectors();
-  console.log({ params });
+
   return currentFlow?.name ? (
     <Flow />
   ) : (

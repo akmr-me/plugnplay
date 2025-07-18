@@ -24,6 +24,7 @@ import { CREDENTIAL_TYPES } from "@/constants";
 import { createAndUpdateCredential } from "@/service/node";
 import { useUser } from "@clerk/nextjs";
 import { useAuth } from "@clerk/clerk-react";
+import { toast } from "sonner";
 
 export default function CredentialComponent({ isOpen, setIsOpen }) {
   const { getToken } = useAuth();
@@ -35,6 +36,7 @@ export default function CredentialComponent({ isOpen, setIsOpen }) {
     type: "",
     token: "",
     apiKey: "",
+    customToken: "",
     username: "",
     password: "",
     googleAuth: null,
@@ -49,6 +51,7 @@ export default function CredentialComponent({ isOpen, setIsOpen }) {
       type: "",
       token: "",
       apiKey: "",
+      customToken: "",
       username: "",
       password: "",
       googleAuth: null,
@@ -89,6 +92,7 @@ export default function CredentialComponent({ isOpen, setIsOpen }) {
 
     // Validate based on credential type
     const credentialType = CREDENTIAL_TYPES[formData.type];
+
     if (credentialType.fields.length > 0) {
       const hasRequiredFields = credentialType.fields.every(
         (field) => formData[field] && formData[field].trim() !== ""
@@ -106,7 +110,7 @@ export default function CredentialComponent({ isOpen, setIsOpen }) {
     }
     const token = await getToken();
     if (!token) return;
-    console.log("credential form data", formData);
+
     // Create credential object
     const newCredential = {
       name: formData.name,
@@ -114,19 +118,30 @@ export default function CredentialComponent({ isOpen, setIsOpen }) {
       type: formData.type,
       ...getCredentialData(),
     };
-    const res = await createAndUpdateCredential(token, user.id, newCredential);
-    console.log(res);
+    try {
+      const res = await createAndUpdateCredential(
+        token,
+        user.id,
+        newCredential
+      );
 
-    setCredentials((prev) => [...prev, newCredential]);
-    resetForm();
-    setIsOpen(false);
-    alert("Credential saved successfully!");
+      setCredentials((prev) => [...prev, newCredential]);
+      resetForm();
+      setIsOpen(false);
+      toast.success("Credential saved successfully!");
+    } catch (error) {
+      toast.error("Error saving credential:", {
+        description: error.message,
+      });
+    }
   };
 
   const getCredentialData = () => {
     switch (formData.type) {
       case "bearer-token":
         return { bearer_token: formData.token };
+      case "custom-token":
+        return { custom_token: formData.customToken };
       case "api-key":
         return { api_key_value: formData.apiKey, api_key_name: "x-api-key" };
       case "basic-auth":
@@ -169,6 +184,47 @@ export default function CredentialComponent({ isOpen, setIsOpen }) {
                     setFormData((prev) => ({ ...prev, token: e.target.value }))
                   }
                   placeholder="Enter your bearer token"
+                  className="pr-10"
+                />
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                  onClick={() => setShowPassword(!showPassword)}
+                >
+                  {showPassword ? (
+                    <EyeOff className="h-4 w-4" />
+                  ) : (
+                    <Eye className="h-4 w-4" />
+                  )}
+                </Button>
+              </div>
+            </div>
+          </div>
+        );
+
+      case "custom-token":
+        return (
+          <div className="space-y-4">
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              {IconComponent && <IconComponent className="w-4 h-4" />}
+              {CREDENTIAL_TYPES[formData.type].description}
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="customToken">Custom Token *</Label>
+              <div className="relative">
+                <Input
+                  id="customToken"
+                  type={showPassword ? "text" : "password"}
+                  value={formData.customToken}
+                  onChange={(e) =>
+                    setFormData((prev) => ({
+                      ...prev,
+                      customToken: e.target.value,
+                    }))
+                  }
+                  placeholder="Enter your custom token"
                   className="pr-10"
                 />
                 <Button

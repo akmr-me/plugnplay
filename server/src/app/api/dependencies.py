@@ -39,8 +39,49 @@ security = HTTPBearer()
 async def get_current_user(
     request: Request, token=Depends(security), db: AsyncSession = Depends(async_get_db)
 ):
-    print(token)
     token_str = token.credentials
+    jwks = await get_jwks()
+
+    unverified_header = jwt.get_unverified_header(token_str)
+    kid = unverified_header["kid"]
+
+    key_data = next((k for k in jwks if k["kid"] == kid), None)
+    if key_data is None:
+        raise HTTPException(status_code=401, detail="Invalid token")
+
+    public_key = jwk.construct(key_data)
+    message, encoded_signature = token_str.rsplit(".", 1)
+    decoded_signature = base64url_decode(encoded_signature.encode())
+
+    if not public_key.verify(message.encode(), decoded_signature):
+        raise HTTPException(status_code=401, detail="Token signature invalid")
+
+    try:
+        payload = jwt.decode(
+            token_str,
+            public_key.to_pem().decode(),
+            algorithms=["RS256"],
+            options={"verify_aud": False},
+        )
+    except JWTError:
+        raise HTTPException(status_code=401, detail="Token invalid")
+
+    # Extract user info
+    user_id = payload["sub"]
+    email = payload.get("email")
+    print(email)
+    # Optionally sync user in DB
+    user = await sync_user_to_db(user_id, email, db)
+
+    return user
+
+
+async def get_current_user_from_token(
+    token_str: str, db: AsyncSession = Depends(async_get_db)
+):
+    if not token_str:
+        raise HTTPException(status_code=401, detail="Token missing")
+
     jwks = await get_jwks()
 
     unverified_header = jwt.get_unverified_header(token_str)

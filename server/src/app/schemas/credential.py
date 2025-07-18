@@ -8,6 +8,7 @@ from datetime import datetime
 
 class CredentialType(str, enum.Enum):
     bearer = "bearer-token"
+    custom = "custom-token"
     api_key = "api-key"
     basic = "basic-auth"
     google_oauth = "google-oauth"
@@ -21,6 +22,8 @@ class CredentialBase(BaseModel):
 
     # Optional fields depending on type
     bearer_token: Optional[str] = None
+
+    custom_token: Optional[str] = None
 
     api_key_name: Optional[str] = None
     api_key_value: Optional[str] = None
@@ -59,6 +62,7 @@ class CredentialUpdate(BaseModel):
     type: Optional[CredentialType] = None
 
     bearer_token: Optional[str] = None
+    custom_token: Optional[str] = None
     api_key_name: Optional[str] = None
     api_key_value: Optional[str] = None
     basic_username: Optional[str] = None

@@ -3,7 +3,7 @@
 import { cn } from "@/lib/utils";
 import { buttonVariants } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import { Mail } from "lucide-react";
+import { ClipboardCopy, Mail } from "lucide-react";
 import { NotionFill } from "@/components/Icons/Notion";
 import { Sleep } from "@/components/Icons/Sleep";
 import { NodeType } from "@/types";
@@ -33,6 +33,12 @@ const Others = [
     type: NodeType.ConditionalOtherTools,
     icon: Conditional,
     label: "Conditional",
+    component: <p>compoent</p>,
+  },
+  {
+    type: NodeType.TextOtherTools,
+    icon: ClipboardCopy,
+    label: "Text",
     component: <p>compoent</p>,
   },
 ];

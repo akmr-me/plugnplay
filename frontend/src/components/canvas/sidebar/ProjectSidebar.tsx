@@ -31,7 +31,7 @@ export default function ProjectSidebar() {
   const { getToken } = useAuth();
   const { user, isSignedIn } = useUser();
   const [isOpen, setIsOpen] = useState(() => (params.projectId ? true : false));
-  console.log("params from side bar", params);
+
   const mappedData = React.useMemo(() => {
     return allProjects?.map((project) => ({
       ...project,
@@ -56,7 +56,7 @@ export default function ProjectSidebar() {
     }
 
     const projects = await fetchAllProjects(token, user.id);
-    console.log("from effect", { projects });
+
     if (projects.data) {
       addProject(projects.data);
     }
@@ -68,7 +68,6 @@ export default function ProjectSidebar() {
     }
   }, [isSignedIn, handleFetchAllProjects]);
 
-  console.log({ currentFlow, currentProject });
   const handleOpenChange = (open: boolean, project: Project) => {
     setIsOpen(open);
     if (open) {
@@ -77,7 +76,6 @@ export default function ProjectSidebar() {
 
       setCurrentFlow(null);
       router.push(`/canvas/project/${projectId}`);
-      console.log("router push called");
     } else {
       if (needsSave) {
         const userConfirmation = confirm(

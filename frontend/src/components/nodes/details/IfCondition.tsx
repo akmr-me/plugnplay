@@ -34,7 +34,7 @@ export default function IfConditionDetails({
   ]);
   const [logicalOperator, setLogicalOperator] = useState([undefined, "and"]);
   const [conditionStatus, setConditionStatus] = useState("active");
-  console.log({ conditions });
+
   const addCondition = () => {
     const newCondition = {
       id: Date.now(),

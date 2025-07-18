@@ -210,6 +210,11 @@ async def handle_external_webhook(
             if not auth_header or auth_header != expected:
                 return unauthorized("Invalid Bearer token")
 
+        elif webhook.auth_type == AuthType.CUSTOM:
+            expected = f"{webhook.credentials.custom_token}"
+            if not auth_header or auth_header != expected:
+                return unauthorized("Invalid Custom token")
+
         elif webhook.auth_type == AuthType.API_KEY:
             api_key = request.headers.get("x-api-key")
             if not api_key or api_key != webhook.credentials.api_key:

@@ -5,7 +5,7 @@ import { OpenaiFill } from "@/components/Icons/OpenAI";
 import { Tools } from "@/components/Icons/Tools";
 import { OutlineMemory } from "@/components/Icons/Memory";
 import { HttpGet } from "@/components/Icons/Http";
-import { Mail, WebhookIcon } from "lucide-react";
+import { ClipboardCopy, Mail, WebhookIcon } from "lucide-react";
 import { Javascript } from "@/components/Icons/Javascript";
 import { NotionFill } from "@/components/Icons/Notion";
 import { Sleep } from "@/components/Icons/Sleep";
@@ -29,4 +29,5 @@ export const OtherToolsIcon: Record<string, unknown> = {
   [NodeType.NotionOtherTools]: NotionFill,
   [NodeType.SleepOtherTools]: Sleep,
   [NodeType.ConditionalOtherTools]: Conditional,
+  [NodeType.TextOtherTools]: ClipboardCopy, // Using Tools icon for Text node
 };

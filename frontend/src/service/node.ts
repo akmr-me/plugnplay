@@ -1,5 +1,31 @@
 import { ValidField } from "@/types";
 
+// utils/wsClient.ts
+export function connectToWebSocket(workflowId: string, token: string) {
+  const wsUrl = `${process.env.NEXT_PUBLIC_WS_URL}ws/${workflowId}?token=${token}`;
+
+  const socket = new WebSocket(wsUrl);
+
+  socket.onopen = () => {
+    console.log("✅ WebSocket connected");
+  };
+
+  socket.onmessage = (event) => {
+    const data = JSON.parse(event.data);
+    console.log("📨 Received from server:", data);
+  };
+
+  socket.onerror = (error) => {
+    console.error("WebSocket error", error);
+  };
+
+  socket.onclose = () => {
+    console.log("❌ WebSocket disconnected");
+  };
+
+  return socket;
+}
+
 export const createFormTrigger = async (
   token: string,
   title: string,
@@ -29,6 +55,8 @@ export const updateFormTrigger = async (
   description?: string
 ) => {
   const EndPoint = process.env.NEXT_PUBLIC_API_URL + "form/" + workflowId;
+
+  if (title && title.length < 3) return;
 
   const response = await fetch(EndPoint, {
     method: "PATCH",

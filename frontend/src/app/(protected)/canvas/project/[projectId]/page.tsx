@@ -6,7 +6,7 @@ import { useParams } from "next/navigation";
 export default function Page() {
   const { currentProject } = useFlowSelectors();
   const params = useParams();
-  console.log(params);
+  // console.log(params);
   return (
     <div className="flex h-full items-center justify-center">
       <p className="text-muted-foreground pr-1">

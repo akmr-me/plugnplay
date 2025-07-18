@@ -9,6 +9,7 @@ import {
   Shield,
   User,
   Globe,
+  KeyRound,
 } from "lucide-react";
 
 export const HttpMethods = [
@@ -25,6 +26,7 @@ export const HeaderAuthTypes = [
   { value: "none", label: "None" },
   { value: "bearer", label: "Bearer Token" },
   { value: "api-key", label: "API Key" },
+  { value: "custom", label: "Custom Token" },
   { value: "basic", label: "Basic Auth" },
 ];
 
@@ -37,6 +39,8 @@ export const headerAuthKeyValue = (
   switch (authType) {
     case "bearer":
       return { Authorization: `Bearer ${token}` };
+    case "custom":
+      return { Authorization: `${token}` };
     case "api-key":
       return { "x-api-key": token };
     case "basic":
@@ -118,6 +122,12 @@ export const CREDENTIAL_TYPES = {
     icon: User,
     description: "Username and password authentication",
     fields: ["username", "password"],
+  },
+  "custom-token": {
+    label: "Custom Token",
+    icon: KeyRound, // Or another fitting icon from your icon set
+    description: "Authorization header with raw token (no prefix)",
+    fields: ["customToken"],
   },
   "google-oauth": {
     label: "Google OAuth",

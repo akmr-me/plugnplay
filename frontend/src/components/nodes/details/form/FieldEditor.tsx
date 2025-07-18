@@ -25,7 +25,7 @@ const FieldEditor = ({
   workflowId,
   deleteField,
 }: FieldEditorProps) => {
-  const updateDebouncedFormField = useDebounceCallback(updateFormField, 400);
+  const updateDebouncedFormField = useDebounceCallback(updateFormField, 1000);
   const { getToken } = useAuth();
   const FieldIcon = fieldTypes.find((t) => t.type === field.type)?.icon || Type;
   const updateField = async (id: string, updates: FieldType) => {

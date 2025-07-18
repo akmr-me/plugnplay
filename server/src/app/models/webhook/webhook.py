@@ -15,6 +15,7 @@ from app.core.db.database import Base
 class AuthType(str, PyEnum):
     NONE = "none"
     BEARER = "bearer-token"
+    CUSTOM = "custom-token"
     API_KEY = "api-key"
     BASIC = "basic-auth"
 
@@ -30,7 +31,7 @@ class Webhook(Base):
     __tablename__ = "webhook"
 
     workflow_id: Mapped[uuid.UUID] = mapped_column(
-        ForeignKey("workflow.id"), nullable=False
+        ForeignKey("workflow.id", ondelete="CASCADE"), nullable=False
     )
     credentials: Mapped["Credential"] = relationship(
         "Credential", lazy="joined", init=False
@@ -44,6 +45,7 @@ class Webhook(Base):
         back_populates="webhook",
         cascade="all, delete-orphan",
         default_factory=list,
+        passive_deletes=True,
     )
     id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True),

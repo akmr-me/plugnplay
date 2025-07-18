@@ -18,6 +18,7 @@ export enum NodeType {
   MailOtherTools = "mail-other-tool",
   NotionOtherTools = "notion-other-tool",
   SleepOtherTools = "sleep-other-tool",
+  TextOtherTools = "text-other-tool",
   ConditionalOtherTools = "conditional-other-tool",
 }
 

@@ -9,6 +9,7 @@ from .core.config import settings
 from .core.setup import create_application, lifespan_factory
 from fastapi.middleware.cors import CORSMiddleware
 
+
 admin = create_admin_interface()
 
 

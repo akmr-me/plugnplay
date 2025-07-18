@@ -77,7 +77,7 @@ export default function CreateProject({
     );
     route += "project/" + newProject.id;
     setCurrentProject(newProject);
-    console.log("created project", newProject);
+
     if (workflowName) {
       const newWorkflow: Flow = await createNewWorkflow(
         token,
@@ -86,13 +86,13 @@ export default function CreateProject({
         newProject.id
       );
       // newProject.flows.push(newWorkflow);
-      console.log("create new workflow", newWorkflow);
+
       setCurrentFlow(newWorkflow);
       route += "/flow/" + newWorkflow.id;
     }
     setWorkflowName("");
     const projects = await fetchAllProjects(token, user?.id);
-    console.log({ projects });
+
     addProject(projects?.data);
     // setCurrentFlow(newProject)
     setOpen(false);
@@ -115,7 +115,7 @@ export default function CreateProject({
       user?.id,
       projectId
     );
-    console.log("workflow", newFlow);
+
     addFlow(newFlow);
     // setCurrentFlow(newFlow)
     setWorkflowName("");

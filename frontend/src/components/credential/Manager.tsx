@@ -45,7 +45,6 @@ export default function CredentialManager() {
     const token = await getToken();
     if (!token || !user?.id) return;
     const credentials = await getAllCredential(token, user.id);
-    console.log({ credentials });
     setCredentials(credentials);
   };
   useEffect(() => {

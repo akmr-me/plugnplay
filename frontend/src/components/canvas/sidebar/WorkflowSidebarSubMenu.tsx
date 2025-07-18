@@ -47,7 +47,7 @@ export default function WorkflowSidebarSubMenu({
       workflowId,
       projectId
     );
-    console.log("delete", response);
+
     if (response.message) {
       getAllFlows();
     }
@@ -67,9 +67,8 @@ export default function WorkflowSidebarSubMenu({
       handleFetchAllProjects();
     }
   };
-  console.log("sidebar submenu");
+
   const getFlowDetails = async (projectId: string, workflowId: string) => {
-    console.log({ projectId, workflowId });
     if (needsSave && params.flowId) {
       const userConfirmation = confirm(
         "Unsaved changes will be lost. Are you sure you want to continue?"
@@ -98,14 +97,12 @@ export default function WorkflowSidebarSubMenu({
   const getAllFlows = async () => {
     const token = await getToken();
     if (!token || !user?.id) return;
-    console.log("geall flow called");
+
     const response = await getAllFlowsInProject(token, user?.id, project.id);
 
     setFlows(response.data.map((flow) => ({ ...flow, title: flow.name })));
-    console.log(response);
   };
   useEffect(() => {
-    console.log("console.log");
     if (isSignedIn) getAllFlows();
   }, [project.id, params.projectId, isSignedIn, params.flowId]);
 

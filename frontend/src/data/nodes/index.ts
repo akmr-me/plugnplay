@@ -17,6 +17,7 @@ import MailNode from "@/components/nodes/tools/other/MailNode";
 import SleepNode from "@/components/nodes/tools/other/SleepNode";
 import NotionNode from "@/components/nodes/tools/other/NotionNode";
 import ConditionalNode from "@/components/nodes/tools/other/ConditionNode";
+import TextNode from "@/components/nodes/tools/other/TextNode";
 
 export type PositionLoggerNode = Node<
   {
@@ -89,6 +90,7 @@ export const nodeTypes = {
   [NodeType.SleepOtherTools]: SleepNode,
   [NodeType.NotionOtherTools]: NotionNode,
   [NodeType.ConditionalOtherTools]: ConditionalNode,
+  [NodeType.TextOtherTools]: TextNode, // Assuming Text is also an AI tool
 } satisfies NodeTypes;
 
 export type TriggerNode = {
@@ -178,6 +180,11 @@ const OtherTools: TriggerNode[] = [
     type: NodeType.SleepOtherTools,
     name: "sleep",
     description: "Sleep for a given time",
+  },
+  {
+    type: NodeType.TextOtherTools,
+    name: "Text",
+    description: "Use tools to get final text output",
   },
 ];
 

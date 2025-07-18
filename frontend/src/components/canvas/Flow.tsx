@@ -45,6 +45,7 @@ import JavascriptEditorDetails from "../nodes/details/JavascriptEditor";
 import IfConditionDetails from "../nodes/details/IfCondition";
 import GmailDetails from "../nodes/details/Gmail";
 import OpenAIDetails from "../nodes/details/AiAgent";
+import TextDetails from "../nodes/details/TextDetails";
 
 export default function Flow() {
   const [selectedNode, setSelectedNode] = useState<
@@ -271,7 +272,7 @@ export default function Flow() {
         onNodeDragStart={onNodeDragStart}
         colorMode={theme as ColorMode}
         onDelete={(...e) => {
-          console.log("onnode", e);
+          console.log("on node delete", e);
         }}
       >
         <Panel
@@ -322,4 +323,5 @@ const NodeInputComponent = {
   [NodeType.JavaScriptProgrammingTools]: JavascriptEditorDetails,
   [NodeType.ConditionalOtherTools]: IfConditionDetails,
   [NodeType.MailOtherTools]: GmailDetails,
+  [NodeType.TextOtherTools]: TextDetails,
 };

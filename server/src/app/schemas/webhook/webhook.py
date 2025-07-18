@@ -11,6 +11,7 @@ from app.models.credential import Credential
 class AuthType(str, enum.Enum):
     NONE = "none"
     BEARER = "bearer-token"
+    CUSTOM = "custom-token"
     API_KEY = "api-key"
     BASIC = "basic-auth"
 

@@ -21,7 +21,13 @@ from ...crud.form.form_field import crud_form_fields
 from ...crud.crud_workflows import crud_workflows
 from ...crud.form.form_response import crud_form_responses
 from ...crud.form.form_response_value import crud_form_response_values
-from ...schemas.form.form import FormCreate, FormCreateInternal, FormRead, FormUpdate
+from ...schemas.form.form import (
+    FormCreate,
+    FormCreateInternal,
+    FormRead,
+    FormUpdate,
+    FormReadPatch,
+)
 from ...schemas.form.form_field import (
     FormFieldCreate,
     FormFieldCreateInternal,
@@ -97,14 +103,14 @@ async def update_form_title_or_description(
     form_uuid = UUID(form_id)
 
     # Get the form
-    form = await crud_forms.get(db=db, id=form_uuid, schema_to_select=FormRead)
+    form = await crud_forms.get(db=db, id=form_uuid, schema_to_select=FormReadPatch)
     if form is None:
         raise NotFoundException("Form not found")
 
     # Ensure user owns the form (via workflow)
-    workflow = await crud_workflows.get(
-        db=db, id=form["workflow_id"], schema_to_select=WorkflowRead
-    )
+    # workflow = await crud_workflows.get(
+    #     db=db, id=form["workflow_id"], schema_to_select=WorkflowRead
+    # )
     # if workflow is None or workflow.user_id != current_user["id"]:
     #     raise ForbiddenException("You do not have permission to update this form")
 
@@ -113,7 +119,7 @@ async def update_form_title_or_description(
     if not update_data:
         raise BadRequestException(status_code=400, detail="No valid fields to update.")
 
-    updated_form = await crud_forms.update(db=db, object=update_data, id=form_uuid)
+    await crud_forms.update(db=db, object=update_data, id=form_uuid)
 
     return {"message": "Post updated"}
 
