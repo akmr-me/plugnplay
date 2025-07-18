@@ -1,20 +1,17 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import {
-  X,
-  Minimize2,
-  Maximize2,
-  MessageCircle,
-  Monitor,
-  Copy,
-} from "lucide-react";
+import { X, Minimize2, Monitor, Copy } from "lucide-react";
 import { toast } from "sonner";
 
-const FloatingStreamCard = ({ isConnected, streamData }) => {
-  const [isMinimized, setIsMinimized] = useState(false);
+const FloatingStreamCard = ({
+  isConnected,
+  streamData,
+  isMinimized,
+  setIsMinimized,
+}) => {
   const [selectedItem, setSelectedItem] = useState(null);
   //   const [streamData, setStreamData] = useState([]);
   //   const [isConnected, setIsConnected] = useState(false);
@@ -247,7 +244,10 @@ const FloatingStreamCard = ({ isConnected, streamData }) => {
                               <h3 className="font-medium text-xs mb-1 truncate">
                                 {JSON.parse(item.details)?.fields?.[0].label}
                               </h3>
-                              <span className="text-xs text-muted-foreground flex items-center gap-1 justify-between">
+                              <span
+                                className="text-xs text-muted-foreground flex items-center gap-1 justify-between"
+                                onClick={(e) => e.stopPropagation()}
+                              >
                                 {/* <span>{item.details?.fields?.[0]?.value}</span> */}
                                 <span>
                                   {JSON.parse(item.details)?.fields?.[0].value}
@@ -256,7 +256,8 @@ const FloatingStreamCard = ({ isConnected, streamData }) => {
                                   size={14}
                                   onClick={() =>
                                     copyToClipboard(
-                                      item.description,
+                                      JSON.parse(item.details)?.fields?.[0]
+                                        .value,
                                       JSON.parse(item.details)?.fields?.[0]
                                         .label
                                     )

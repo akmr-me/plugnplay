@@ -23,6 +23,7 @@ export default function PlayNPublishButtonGroup() {
   const { saveWorkflow, setCurrentFlow } = useFlowActions();
   const [isConnected, setIsConnected] = useState(false);
   const [streamData, setStreamData] = useState([]);
+  const [isMinimized, setIsMinimized] = useState(false);
   const params = useParams();
   const isFlowPage = params?.flowId && params?.projectId;
 
@@ -64,6 +65,7 @@ export default function PlayNPublishButtonGroup() {
     socket.onopen = () => {
       console.log("✅ WebSocket connected");
       setIsConnected(true);
+      setIsMinimized(false);
     };
 
     socket.onmessage = (event) => {
@@ -184,7 +186,12 @@ export default function PlayNPublishButtonGroup() {
       {/* <Button variant="outline" size="sm" className="cursor-pointer">
         <Rss /> Publish
       </Button> */}
-      <FloatingStreamCard isConnected={isConnected} streamData={streamData} />
+      <FloatingStreamCard
+        isConnected={isConnected}
+        streamData={streamData}
+        isMinimized={isMinimized}
+        setIsMinimized={setIsMinimized}
+      />
     </div>
   );
 }
