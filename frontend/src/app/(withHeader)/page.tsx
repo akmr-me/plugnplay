@@ -23,8 +23,16 @@ import {
   Clock,
   Smartphone,
 } from "lucide-react";
+import VideoModalDemo from "@/components/VideoModalComponent";
+import TrialButtonWithRouter from "@/components/TrialButtonWithRouter";
 
-const FeatureCard = ({ title, description, icon: Icon }) => (
+type FeatureCardProps = {
+  title: string;
+  description: string;
+  icon: React.ComponentType<React.SVGProps<SVGSVGElement>>;
+};
+
+const FeatureCard = ({ title, description, icon: Icon }: FeatureCardProps) => (
   <Card className="group hover:shadow-lg transition-all duration-300 border-border/50 hover:border-primary/50 bg-card/50 backdrop-blur-sm">
     <CardHeader className="text-center pb-3">
       <div className="mx-auto mb-4 p-3 rounded-full bg-primary/10 group-hover:bg-primary/20 transition-colors">
@@ -40,7 +48,21 @@ const FeatureCard = ({ title, description, icon: Icon }) => (
   </Card>
 );
 
-const TestimonialCard = ({ name, company, text, avatar, rating = 5 }) => (
+type TestimonialCardProps = {
+  name: string;
+  company: string;
+  text: string;
+  avatar: React.ReactNode;
+  rating?: number;
+};
+
+const TestimonialCard = ({
+  name,
+  company,
+  text,
+  avatar,
+  rating = 5,
+}: TestimonialCardProps) => (
   <Card className="bg-card/50 backdrop-blur-sm border-border/50 hover:shadow-md transition-all duration-300">
     <CardContent className="p-6">
       <div className="flex items-center mb-4">
@@ -62,6 +84,16 @@ const TestimonialCard = ({ name, company, text, avatar, rating = 5 }) => (
   </Card>
 );
 
+type PricingCardProps = {
+  title: string;
+  price: string;
+  period: string;
+  description: string;
+  features: string[];
+  isPopular?: boolean;
+  buttonText?: string;
+};
+
 const PricingCard = ({
   title,
   price,
@@ -70,7 +102,7 @@ const PricingCard = ({
   features,
   isPopular = false,
   buttonText = "Get Started",
-}) => (
+}: PricingCardProps) => (
   <Card
     className={`relative ${
       isPopular ? "border-primary shadow-lg scale-105" : "border-border/50"
@@ -265,14 +297,8 @@ export default function Home() {
               users worldwide.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center mb-12">
-              <Button size="lg" className="text-lg px-8 py-6">
-                Start Free Trial
-                <ArrowRight className="ml-2 h-5 w-5" />
-              </Button>
-              <Button size="lg" variant="outline" className="text-lg px-8 py-6">
-                <Play className="mr-2 h-5 w-5" />
-                Watch Demo
-              </Button>
+              <TrialButtonWithRouter />
+              <VideoModalDemo />
             </div>
           </div>
 
@@ -363,15 +389,15 @@ export default function Home() {
           </p>
           <Card className="overflow-hidden">
             <CardContent className="p-0">
-              <div className="aspect-video bg-gradient-to-br from-primary/10 to-primary/5 flex items-center justify-center">
-                <Button
-                  size="lg"
-                  variant="outline"
-                  className="text-lg px-8 py-6"
-                >
-                  <Play className="mr-2 h-6 w-6" />
-                  Play Tutorial
-                </Button>
+              <div className="aspect-video">
+                <iframe
+                  className="w-full h-full"
+                  src="https://www.youtube.com/embed/ln-hAVCy0tU"
+                  title="Tutorial Video"
+                  frameBorder="0"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                  allowFullScreen
+                ></iframe>
               </div>
             </CardContent>
           </Card>
