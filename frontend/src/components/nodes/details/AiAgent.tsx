@@ -36,12 +36,13 @@ import { WorkflowTemplateParser } from "@/lib/parser";
 export default function OpenAIDetails({ setSelectedNode, node }) {
   const { getToken } = useAuth();
   const { getNodes, getEdges, updateNodeData } = useReactFlow();
+  const [loading, setLoading] = useState(false);
 
   // OpenAI Configuration States
   const [description, setDescription] = useState(
     node.data.state?.description || ""
   );
-  const [model, setModel] = useState(node.data.state?.model || "gpt-4");
+  const [model, setModel] = useState(node.data.state?.model || "gpt-4o");
   const [prompt, setPrompt] = useState(node.data.state?.prompt || "");
   //   const [temperature, setTemperature] = useState(0.7);
   //   const [maxTokens, setMaxTokens] = useState(1000);
@@ -115,12 +116,20 @@ export default function OpenAIDetails({ setSelectedNode, node }) {
     ) as Record<string, unknown>;
 
     try {
+      setLoading(true);
+      toast("Testing OpenAI configuration started...");
       // Replace with your actual test API call
       const convertedState = parser.parseTemplates(node.data.state, input);
       const resposne = await handleTestNode(node.workflowId, convertedState);
       updateNodeData(node.id, { ...node.data, output: resposne });
     } catch (error) {
       console.error("Error testing OpenAI config:", error);
+      toast.error("Error testing OpenAI configuration:", {
+        description: error.message,
+      });
+    } finally {
+      setLoading(false);
+      toast.success("OpenAI configuration tested successfully!");
     }
   };
 
@@ -320,6 +329,7 @@ export default function OpenAIDetails({ setSelectedNode, node }) {
                 className="flex-1"
                 size="sm"
                 onClick={handleSaveOpenAIConfiguration}
+                disabled={loading}
               >
                 <Settings className="h-3 w-3 mr-1" />
                 Save Configuration
@@ -329,6 +339,8 @@ export default function OpenAIDetails({ setSelectedNode, node }) {
                 size="sm"
                 className="flex items-center gap-1"
                 onClick={handleTestConfiguration}
+                loading={loading}
+                disabled={loading}
               >
                 <TestTube className="h-3 w-3" />
                 Test
