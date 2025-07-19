@@ -1,3 +1,4 @@
+import { getCredential } from "@/service/node";
 import { FormFieldType } from "@/types";
 import {
   Calendar,
@@ -30,19 +31,29 @@ export const HeaderAuthTypes = [
   { value: "basic", label: "Basic Auth" },
 ];
 
-export const headerAuthKeyValue = (
+export const headerAuthKeyValue = async (
   authType: string,
+  credentialId?: string,
   token?: string,
+  userId?: string,
   username?: string,
   password?: string
 ) => {
+  let authToken = "";
+  if (token && userId && credentialId) {
+    //
+    const credential = await getCredential(token, userId, credentialId);
+    if (credential) {
+      authToken = credential.custom_token;
+    }
+  }
   switch (authType) {
     case "bearer":
-      return { Authorization: `Bearer ${token}` };
+      return { Authorization: `Bearer ${authToken}` };
     case "custom":
-      return { Authorization: `${token}` };
+      return { Authorization: `${authToken}` };
     case "api-key":
-      return { "x-api-key": token };
+      return { "x-api-key": authToken };
     case "basic":
       const basicAuth = btoa(`${username}:${password}`);
       return { Authorization: `Basic ${basicAuth}` };

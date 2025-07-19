@@ -79,7 +79,7 @@ export default function Flow() {
   const onConnect = useCallback(
     (connection: Connection) => {
       // Create Edge
-      const data = { activate: true };
+      const data = { activate: false };
       const newEdge = createEdge(data, connection);
       addEdge(newEdge);
     },

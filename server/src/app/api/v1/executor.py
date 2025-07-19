@@ -129,7 +129,7 @@ async def run_workflow_nodes(
     # 3. Get associated credentials (if needed)
     # Example: credential_id stored on workflow
     # print("input data", input_data)
-    result = await structure_invocation(input_data, db)
+    result = await structure_invocation(input_data)
     # print(result)
     # 4. Simulate node execution logic
     # try:
@@ -146,7 +146,7 @@ async def run_workflow_nodes(
     #     raise HTTPException(status_code=500, detail=f"Workflow execution failed: {e}")
 
     # 5. Return JSON response
-    return JSONResponse(content={"result": result["result"].content})
+    return JSONResponse(content={"result": result["result"]})
 
 
 @router.websocket("/ws/{workflow_id}")

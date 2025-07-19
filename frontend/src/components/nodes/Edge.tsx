@@ -65,7 +65,7 @@ export default function Edge({
           </Button>
         </EdgeLabelRenderer>
       )}
-      {!data.activate && (
+      {data.activate && (
         <>
           <circle
             r="4"

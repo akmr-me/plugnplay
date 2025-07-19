@@ -179,10 +179,8 @@ export function CustomCombobox({
 export default function AuthCredentials({ authToken, setAuthToken, onChange }) {
   const [showCredentialModal, setShowCredentialModal] = useState(false);
 
-  const handleAuthTokenChange = (newValue) => {
+  const handleAuthTokenChange = (newValue: string) => {
     setAuthToken(newValue);
-    onChange(newValue);
-    // console.log("Auth token changed to:", newValue);
   };
 
   const handleAddCredential = () => {

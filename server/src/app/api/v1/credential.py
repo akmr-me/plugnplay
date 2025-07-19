@@ -64,6 +64,40 @@ async def get_credentials(
     return credentials
 
 
+@router.get("/credential/{user_id}/{credential_id}", response_model=CredentialRead)
+async def get_credential(
+    user_id: str,
+    credential_id: str,
+    current_user: Annotated[dict, Depends(get_current_user)],
+    db: Annotated[AsyncSession, Depends(async_get_db)],
+):
+
+    db_user = await crud_users.get(
+        db=db, user_id=user_id, is_deleted=False, schema_to_select=UserRead
+    )
+    if not db_user:
+        raise NotFoundException("User not found")
+
+    db_user = cast(UserRead, db_user)
+
+    if current_user.user_id != db_user["user_id"]:
+        raise ForbiddenException()
+
+    db_credential = await crud_credentials.get(
+        db=db,
+        id=credential_id,
+        user_id=user_id,
+        is_deleted=False,
+        schema_to_select=CredentialRead,
+    )
+
+    if db_credential is None:
+        raise NotFoundException("No credential found")
+    print(db_credential)
+
+    return cast(CredentialRead, db_credential)
+
+
 @router.post("/credential/{user_id}", response_model=CredentialRead, status_code=201)
 async def create_credential(
     request: Request,

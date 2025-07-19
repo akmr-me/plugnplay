@@ -60,7 +60,7 @@ export function createEdge(
 ) {
   return {
     ...connection,
-    id: "node_" + Date.now(),
+    id: "edge_" + Date.now(),
     type,
     data,
     markerEnd: {

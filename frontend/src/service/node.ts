@@ -223,6 +223,27 @@ export const deleteForm = async (token: string, workflowId: string) => {
   return await response.status;
 };
 
+export const getCredential = async (
+  token: string,
+  user_id: string,
+  credentialId: string
+) => {
+  const EndPoint =
+    process.env.NEXT_PUBLIC_API_URL +
+    "credential/" +
+    user_id +
+    "/" +
+    credentialId;
+  const response = await fetch(EndPoint, {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+  });
+  return await response.json();
+};
+
 export const getAllCredential = async (token: string, user_id: string) => {
   const EndPoint = process.env.NEXT_PUBLIC_API_URL + "credential/" + user_id;
   const response = await fetch(EndPoint, {

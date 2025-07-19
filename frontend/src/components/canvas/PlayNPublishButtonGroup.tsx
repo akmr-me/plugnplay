@@ -18,14 +18,16 @@ import { useParams } from "next/navigation";
 export default function PlayNPublishButtonGroup() {
   const { getToken } = useAuth();
   const { user } = useUser();
-  const { getNodes, getEdges, getViewport } = useReactFlow();
+  const { getNodes, getEdges, getViewport, updateEdgeData } = useReactFlow();
   const { currentFlow, currentProject, needsSave } = useFlowSelectors();
   const { saveWorkflow, setCurrentFlow } = useFlowActions();
   const [isConnected, setIsConnected] = useState(false);
   const [streamData, setStreamData] = useState([]);
-  const [isMinimized, setIsMinimized] = useState(false);
+  const [isMinimized, setIsMinimized] = useState(true);
   const params = useParams();
   const isFlowPage = params?.flowId && params?.projectId;
+
+  const resetStreamData = () => setStreamData([]);
 
   const handleSaveWorkFlow = async () => {
     const token = await getToken();
@@ -81,9 +83,25 @@ export default function PlayNPublishButtonGroup() {
       // formate data here
       try {
         const data = JSON.parse(event.data);
+        const edges = getEdges();
         if (data?.chunk) {
           const currentNode = Object.keys(data.chunk)[0];
           const currentData = data.chunk[currentNode].state.nodes[currentNode];
+          const edge = edges.find((e) => e.source === currentNode);
+
+          if (edge) {
+            edges.forEach((e) => {
+              if (e.id === edge.id) {
+                updateEdgeData(e.id, {
+                  activate: true,
+                });
+              } else {
+                updateEdgeData(e.id, {
+                  activate: false,
+                });
+              }
+            });
+          }
 
           const newStreamData: Record<string, unknown> = {
             id: currentData.id + Date.now(),
@@ -119,6 +137,11 @@ export default function PlayNPublishButtonGroup() {
           setStreamData((prev) => [...prev, messageData]);
           if (startOrEnd === "end") {
             setIsConnected(false);
+            edges.forEach((e) => {
+              updateEdgeData(e.id, {
+                activate: false,
+              });
+            });
           }
         }
         console.log("📨 Received from server:", data);
@@ -191,6 +214,7 @@ export default function PlayNPublishButtonGroup() {
         streamData={streamData}
         isMinimized={isMinimized}
         setIsMinimized={setIsMinimized}
+        resetStreamData={resetStreamData}
       />
     </div>
   );

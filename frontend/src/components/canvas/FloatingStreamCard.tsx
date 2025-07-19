@@ -3,95 +3,38 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { X, Minimize2, Monitor, Copy } from "lucide-react";
+import { X, Minimize2, Monitor, Copy, RotateCcw } from "lucide-react";
 import { toast } from "sonner";
 
-const FloatingStreamCard = ({
+type StreamDataItem = {
+  id: string;
+  type: string;
+  title: string;
+  description: string;
+  details: string;
+  timestamp: number;
+};
+
+interface FloatingStreamCardProps {
+  isConnected: boolean;
+  streamData: StreamDataItem[];
+  isMinimized: boolean;
+  setIsMinimized: (value: boolean) => void;
+  resetStreamData: () => void;
+}
+
+const FloatingStreamCard: React.FC<FloatingStreamCardProps> = ({
   isConnected,
   streamData,
   isMinimized,
   setIsMinimized,
+  resetStreamData,
 }) => {
   const [selectedItem, setSelectedItem] = useState(null);
-  //   const [streamData, setStreamData] = useState([]);
-  //   const [isConnected, setIsConnected] = useState(false);
 
-  // Mock WebSocket data - replace with your actual WebSocket implementation
-  //   useEffect(() => {
-  //     // Simulate WebSocket connection
-  //     const mockData = [
-  //       {
-  //         id: 1,
-  //         title: "User Authentication",
-  //         description: "New user login detected from IP 192.168.1.1",
-  //         timestamp: new Date().toISOString(),
-  //         type: "auth",
-  //         details:
-  //           "User john.doe@example.com successfully authenticated using OAuth2. Session ID: abc123xyz. Device: Chrome on Windows 10. Location: New York, USA.",
-  //       },
-  //       {
-  //         id: 2,
-  //         title: "Database Update",
-  //         description: "Product inventory updated for item #12345",
-  //         timestamp: new Date().toISOString(),
-  //         type: "database",
-  //         details:
-  //           "Product SKU-12345 inventory count changed from 150 to 142 units. Updated by user admin@store.com. Transaction ID: tx_789456123. Warehouse: NYC-01.",
-  //       },
-  //       {
-  //         id: 3,
-  //         title: "Payment Processing",
-  //         description: "Payment of $99.99 processed successfully",
-  //         timestamp: new Date().toISOString(),
-  //         type: "payment",
-  //         details:
-  //           "Payment processed via Stripe. Amount: $99.99 USD. Customer: customer_1234567890. Card ending in 4242. Transaction fee: $3.20. Net amount: $96.79.",
-  //       },
-  //       {
-  //         id: 4,
-  //         title: "System Alert",
-  //         description: "High CPU usage detected on server-01",
-  //         timestamp: new Date().toISOString(),
-  //         type: "alert",
-  //         details:
-  //           "CPU usage has exceeded 85% threshold on server-01.production.com. Current usage: 92%. Memory usage: 78%. Disk usage: 45%. Auto-scaling triggered.",
-  //       },
-  //       {
-  //         id: 5,
-  //         title: "API Request",
-  //         description: "Rate limit exceeded for API key abc123",
-  //         timestamp: new Date().toISOString(),
-  //         type: "api",
-  //         details:
-  //           "API key abc123 has exceeded the rate limit of 1000 requests per hour. Current count: 1001. Client IP: 203.0.113.5. Endpoint: /api/v1/users. Status: 429 Too Many Requests.",
-  //       },
-  //     ];
-
-  //     // setStreamData(mockData);
-  //     // setIsConnected(true);
-
-  //     // Simulate new data coming in
-  //     const interval = setInterval(() => {
-  //       const newItem = {
-  //         id: Date.now(),
-  //         title: `New Event ${Math.floor(Math.random() * 1000)}`,
-  //         description: `Random event description ${Math.floor(
-  //           Math.random() * 100
-  //         )}`,
-  //         timestamp: new Date().toISOString(),
-  //         type: ["auth", "database", "payment", "alert", "api"][
-  //           Math.floor(Math.random() * 5)
-  //         ],
-  //         details: `Detailed information about this event. This is a longer description that provides more context about what happened. Generated at ${new Date().toLocaleString()}.`,
-  //       };
-
-  //       //   setStreamData((prev) => [newItem, ...prev].slice(0, 50)); // Keep only last 50 items
-  //     }, 5000);
-
-  //     return () => clearInterval(interval);
-  //   }, []);
-
-  const getTypeColor = (type) => {
+  const getTypeColor = (
+    type: "tool" | "trigger" | "start" | "end" | "output"
+  ) => {
     const colors = {
       tool: "bg-blue-500 hover:bg-blue-600",
       trigger: "bg-purple-500 hover:bg-purple-600",
@@ -102,7 +45,11 @@ const FloatingStreamCard = ({
     return colors[type] || "bg-gray-500 hover:bg-gray-600";
   };
 
-  const formatTime = (timestamp) => {
+  interface FormatTime {
+    (timestamp: number): string;
+  }
+
+  const formatTime: FormatTime = (timestamp) => {
     return new Date(timestamp).toLocaleTimeString();
   };
 
@@ -145,6 +92,15 @@ const FloatingStreamCard = ({
               Stream Monitor
             </CardTitle>
             <div className="flex gap-1">
+              <Button
+                variant="ghost"
+                title="Reset Stream Data"
+                size="sm"
+                onClick={resetStreamData}
+                className="w-6 h-6 p-0"
+              >
+                <RotateCcw className="w-3 h-3" />
+              </Button>
               <Button
                 variant="ghost"
                 size="sm"

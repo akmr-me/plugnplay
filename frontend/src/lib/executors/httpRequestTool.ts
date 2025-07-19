@@ -15,6 +15,7 @@ interface HttpRequestState {
   url: string;
   httpMethod: string;
   includeQueryParams: boolean;
+  credentialId?: string;
 }
 
 const parser = new WorkflowTemplateParser();
@@ -25,7 +26,9 @@ export default async function httpRequest(
   updateNodeData: (
     id: string,
     data: Record<string, unknown>
-  ) => Promise<unknown>
+  ) => Promise<unknown>,
+  token?: string,
+  userId?: string
 ): Promise<void> {
   //   form Input Object
   const input = getInputOrOutPutData(
@@ -35,9 +38,6 @@ export default async function httpRequest(
     flow.nodes
   ) as Record<string, unknown>;
 
-  //   parse states
-  // Define the expected shape of state
-
   const {
     bodyContent: initialBodyContent,
     queryParams: initialQueryParams,
@@ -45,6 +45,7 @@ export default async function httpRequest(
     includeHeaders,
     authType,
     authToken,
+    credentialId,
     url: initialUrl,
     httpMethod,
     includeQueryParams,
@@ -58,18 +59,14 @@ export default async function httpRequest(
   bodyContent = parser.parseTemplates(bodyContent, input);
   queryParams = parser.parseTemplates(queryParams, input);
   headers = parser.parseTemplates(headers, input);
-  console.log("---------", {
-    bodyContent,
-    queryParams,
-    headers,
-    includeHeaders,
-    authType,
-    authToken,
-    url,
-  });
-  //
+
   try {
-    const authTokenHeader = headerAuthKeyValue(authType, authToken);
+    const authTokenHeader = await headerAuthKeyValue(
+      authType,
+      credentialId,
+      token,
+      userId
+    );
 
     // Build headers object
     const headersObject: Record<string, string> = {};

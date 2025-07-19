@@ -25,16 +25,16 @@ import {
 } from "lucide-react";
 import DetailsModal from "./Modal";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import WorkflowJSON from "./WorkflowJSON";
-import { useAuth, useUser } from "@clerk/nextjs";
+import WorkflowJSON, { getInputOrOutPutData } from "./WorkflowJSON";
+import { useAuth } from "@clerk/nextjs";
 import AuthCredentials from "@/components/AuthCredentials";
 import { useReactFlow } from "@xyflow/react";
 import { handleTestNode } from "@/service/node";
 import { toast } from "sonner";
+import { WorkflowTemplateParser } from "@/lib/parser";
 
 export default function OpenAIDetails({ setSelectedNode, node }) {
   const { getToken } = useAuth();
-  const { user } = useUser();
   const { getNodes, getEdges, updateNodeData } = useReactFlow();
 
   // OpenAI Configuration States
@@ -58,11 +58,11 @@ export default function OpenAIDetails({ setSelectedNode, node }) {
 
   // Available OpenAI Models
   const openAIModels = [
-    { value: "gpt-4", label: "GPT-4", enabled: true },
     { value: "gpt-4-turbo", label: "GPT-4 Turbo", enabled: true },
     { value: "gpt-3.5-turbo", label: "GPT-3.5 Turbo", enabled: true },
     { value: "gpt-4o", label: "GPT-4o", enabled: true },
-    { value: "gpt-4o-mini", label: "GPT-4o Mini", enabled: true },
+    { value: "gpt-4", label: "GPT-4", enabled: false },
+    { value: "gpt-4o-mini", label: "GPT-4o Mini", enabled: false },
     { value: "dall-e-3", label: "DALL-E 3", enabled: false },
     { value: "whisper-1", label: "Whisper", enabled: false },
   ];
@@ -73,40 +73,6 @@ export default function OpenAIDetails({ setSelectedNode, node }) {
     { value: "json", label: "JSON" },
     { value: "structured", label: "Structured", disabled: true },
   ];
-
-  //   const copyToClipboard = async (text) => {
-  //     try {
-  //       await navigator.clipboard.writeText(text);
-  //       console.info("Copied to clipboard:", text);
-  //     } catch (err) {
-  //       console.error("Failed to copy to clipboard");
-  //     }
-  //   };
-
-  //   useEffect(() => {
-  //     async function getOpenAIConfig() {
-  //       const token = await getToken();
-  //       if (!token) return;
-  //       try {
-  //         // Replace with your actual API call
-  //         // const response = await getOpenAIConfig(token, node.workflowId);
-  //         // if (response) {
-  //         //   setApiKeyName(response.apiKeyName || "");
-  //         //   setDescription(response.description || "");
-  //         //   setModel(response.model || "gpt-4");
-  //         //   setPrompt(response.prompt || "");
-  //         //   setTemperature(response.temperature || 0.7);
-  //         //   setMaxTokens(response.maxTokens || 1000);
-  //         //   setSystemPrompt(response.systemPrompt || "");
-  //         //   setResponseFormat(response.responseFormat || "text");
-  //         // }
-  //         console.log("Loading OpenAI configuration...");
-  //       } catch (error) {
-  //         console.log("Error loading OpenAI config:", error);
-  //       }
-  //     }
-  //     getOpenAIConfig();
-  //   }, []);
 
   const handleSaveOpenAIConfiguration = async () => {
     const token = await getToken();
@@ -136,12 +102,23 @@ export default function OpenAIDetails({ setSelectedNode, node }) {
   const handleTestConfiguration = async () => {
     const token = await getToken();
     if (!token) return;
+    const parser = new WorkflowTemplateParser();
+    const flow = {
+      nodes: getNodes(),
+      edges: getEdges(),
+    };
+    const input = getInputOrOutPutData(
+      "input",
+      flow.edges,
+      node,
+      flow.nodes
+    ) as Record<string, unknown>;
 
     try {
       // Replace with your actual test API call
-      const resposne = await handleTestNode(node.workflowId, node.data.state);
+      const convertedState = parser.parseTemplates(node.data.state, input);
+      const resposne = await handleTestNode(node.workflowId, convertedState);
       updateNodeData(node.id, { ...node.data, output: resposne });
-      console.log("Testing OpenAI configuration...", response);
     } catch (error) {
       console.error("Error testing OpenAI config:", error);
     }

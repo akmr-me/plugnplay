@@ -5,6 +5,7 @@ from typing import Literal
 from ..crud.crud_credentials import crud_credentials
 from ..schemas.credential import CredentialRead
 from app.core.db.context import db_context
+import json
 
 
 def create_open_agent(
@@ -19,7 +20,7 @@ def create_open_agent(
         api_key=api_key,
         model=model,
         temperature=0.7,
-        # response_format="json_object",
+        response_format={"type": "json_object"},
     )
 
     # print("model", model)
@@ -37,7 +38,16 @@ def create_open_agent(
     # Step 3: Build Graph (simple one-step LLM call)
     def run_chain():
         chain = prompt | llm
-        return {"result": chain.invoke({})}
+        response = chain.invoke({})  # response is AIMessage
+
+        # Extract the content (which may be a JSON string)
+        response_str = response.content
+
+        # Then safely load it if it's JSON
+        try:
+            return {"result": json.loads(response_str)}
+        except json.JSONDecodeError:
+            return {"result": response_str}  # fallback if not valid JSON
 
     return run_chain()
 

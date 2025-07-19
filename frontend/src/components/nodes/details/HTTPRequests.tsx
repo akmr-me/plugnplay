@@ -26,6 +26,7 @@ import httpRequest from "@/lib/executors/httpRequestTool";
 import { DetailsModalProps } from "@/types";
 import AuthCredentials from "@/components/AuthCredentials";
 import { toast } from "sonner";
+import { useAuth, useUser } from "@clerk/nextjs";
 
 // Define the expected shape for node.data.state
 type HttpRequestNodeState = {
@@ -63,7 +64,10 @@ export default function HttpRequestDetals({
   setSelectedNode,
   node,
 }: HttpRequestDetailsProps) {
+  const { getToken } = useAuth();
+  const { user } = useUser();
   const { getNodes, getEdges } = useReactFlow();
+  const [loading, setLoading] = useState(false);
   const [disableConfigSaving, setDisableConfigSaving] = useState(false);
   const [inputs] = useState(() =>
     getInputOrOutPutData("input", getEdges(), node, getNodes())
@@ -186,8 +190,13 @@ export default function HttpRequestDetals({
   };
 
   const handleTestRequest = async () => {
+    const token = await getToken();
+    if (!token) {
+      toast.error("You need to be logged in to test the request.");
+      return;
+    }
     if (!url) return;
-
+    setLoading(true);
     try {
       const currentNode = {
         ...node,
@@ -208,13 +217,18 @@ export default function HttpRequestDetals({
           },
         },
       };
-      httpRequest(
+      console.log("88888888888888888888888888888888888888");
+      await httpRequest(
         currentNode,
         { nodes: getNodes(), edges: getEdges() },
-        updateNodeData
+        updateNodeData,
+        token,
+        user?.id
       );
     } catch (error) {
       console.error("Request error:", error, { node });
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -542,6 +556,8 @@ export default function HttpRequestDetals({
                   variant="outline"
                   size="sm"
                   className="flex items-center gap-1"
+                  disabled={loading}
+                  isLoading={loading}
                   onClick={handleTestRequest}
                 >
                   <TestTube className="h-3 w-3" />
