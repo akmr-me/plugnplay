@@ -21,6 +21,9 @@ async def prepare_auth_header(credential_id: str, auth_type: str) -> dict:
         credential = await crud_credentials.get(
             db=db, id=credential_id, schema_to_select=CredentialRead
         )
+        if not credential:
+            print(f"Header with credential ID {credential_id} not found.")
+            raise ValueError("Header not found")
     print(credential)
 
     match auth_type:

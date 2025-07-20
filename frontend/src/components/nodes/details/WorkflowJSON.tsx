@@ -38,7 +38,7 @@ export function getInputOrOutPutData(
     console.log({ upStreamNodeIds });
     return upStreamNodeIds.reduce((acc, nodeId) => {
       const node = nodes.find((node) => node.id === nodeId);
-      return { ...acc, [node.type]: node?.data.output };
+      return { ...acc, [node?.type as string]: node?.data.output };
     }, {});
   }
 }
@@ -48,10 +48,11 @@ function WorkflowInput({ node, type, shouldRender }: WorkflowInput) {
   const [data, setData] = useState(() =>
     getInputOrOutPutData(type, getEdges(), node, getNodes())
   );
-  console.log("WorkflowInput", { node, data });
+  // console.log("WorkflowInput", { node, data });
   useEffect(() => {
-    setData(getInputOrOutPutData(type, getEdges(), node, getNodes()));
-  }, [shouldRender]);
+    console.log("useEffect WorkflowInput", { node, type });
+    setData((prev) => getInputOrOutPutData(type, getEdges(), node, getNodes()));
+  }, [node, type, getEdges, getNodes]);
   if (type == "input" && node?.type?.includes("trigger")) return null;
   return (
     <ScrollArea

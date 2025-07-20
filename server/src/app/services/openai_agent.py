@@ -69,6 +69,9 @@ async def structure_invocation(data):
     credential = await crud_credentials.get(
         db=db, id=credential_id, schema_to_select=CredentialRead
     )
+    if not credential:
+        print(f"Credential with id {credential_id} not found")
+        raise ValueError(f"Credential not found")
     print(credential)
     api_key = credential["api_key_value"]
 

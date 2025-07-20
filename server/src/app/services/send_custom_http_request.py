@@ -42,16 +42,33 @@ async def send_custom_http_request(
 
     async with httpx.AsyncClient() as client:
         response = await client.request(
-            method=method, url=url, headers=headers, params=params, content=content
+            method=method,
+            url=url,
+            headers=headers,
+            params=params,
+            content=content,
         )
 
         print("HTTP Response:", response.status_code, response.text)
 
         try:
-            # Try to parse and return JSON if available
-            return response.json()
-        except httpx.HTTPError:
-            # If not JSON (e.g., plain text or HTML), return structured fallback
+            response.raise_for_status()
+
+            # Try to parse JSON
+            data = response.json()
+
+            # Handle GraphQL or structured API errors
+            if "errors" in data and data["errors"]:
+                raise Exception(f"API Error: {data['errors']}")
+
+            return data
+
+        except (httpx.HTTPStatusError, httpx.RequestError) as e:
+            print("HTTP error:", str(e))
+            raise e  # Optional: re-raise or wrap
+
+        except ValueError:
+            # JSON parsing failed — fallback to raw text
             return {
                 "status_code": response.status_code,
                 "text": response.text,

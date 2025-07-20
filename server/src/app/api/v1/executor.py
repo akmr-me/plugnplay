@@ -156,23 +156,22 @@ async def workflow_websocket(
     db: AsyncSession = Depends(async_get_db),
     # current_user: UserRead = Depends(get_current_user),
 ):
-    print("WebSocket connection request for workflow:", workflow_id)
     query_params = parse_qs(websocket.url.query)
     token = query_params.get("token", [None])[0]
-    print("tonen ")
+
     await websocket.accept()
     print("WebSocket connection established for workflow:", workflow_id)
     user = await get_current_user_from_token(token, db)
-    print()
-    print("user", user)
-    print()
+
     if not user:
         await websocket.send_json({"error": "Unauthorized"})
         await websocket.close()
         return
 
     user_id = user.user_id
-    print("user_id", user_id)
+    # if user_id in active_ws_connections:
+    #     print(f"Closed previous WebSocket connection for user {user_id}")
+    #     await active_ws_connections[user_id].close()
 
     active_ws_connections[user_id] = websocket
     try:
@@ -212,32 +211,64 @@ async def workflow_websocket(
         #     }
         # )
         print("before streaming")
-        async for chunk in compiled_graph.astream(
-            {
-                "input": input_payload,
-                "state": {
-                    "nodes": {node["id"]: node for node in workflow_read["nodes"]},
-                    "edges": {edge["id"]: edge for edge in workflow_read["edges"]},
-                },
-                "user_id": user_id,
-            }
-        ):
-            # Process each streamed chunk here
-            print("Streamed chunk:", chunk)
-            await active_ws_connections[user_id].send_json(
+        try:
+            async for chunk in compiled_graph.astream(
                 {
-                    "message": "Workflow execution in progress",
-                    "chunk": chunk,
+                    "input": input_payload,
+                    "state": {
+                        "nodes": {node["id"]: node for node in workflow_read["nodes"]},
+                        "edges": {edge["id"]: edge for edge in workflow_read["edges"]},
+                    },
+                    "user_id": user_id,
+                }
+            ):
+                # Process each streamed chunk here
+                print("Streamed chunk:", chunk)
+                await active_ws_connections[user_id].send_json(
+                    {
+                        "message": "Workflow execution in progress",
+                        "chunk": chunk,
+                    }
+                )
+
+            print("after streaming")
+            # 4. Send result to that user's WebSocket only
+            await websocket.send_json(
+                {
+                    "message": "Workflow executed successfully",
+                    # "result": result,
                 }
             )
-        print("after streaming")
-        # 4. Send result to that user's WebSocket only
-        await websocket.send_json(
-            {
-                "message": "Workflow executed successfully",
-                # "result": result,
-            }
-        )
+
+        except Exception as e:
+            print("Error during workflow execution:", e)
+            # Log the error (optional)
+            import traceback
+            import re
+
+            traceback.print_exc()
+
+            tb_str = traceback.format_exc()
+            print("Traceback:", tb_str)
+
+            match = re.search(r"During task with name '(.+?)' and id '(.+?)'", tb_str)
+            if match:
+                failed_node_name = match.group(1)
+                failed_node_id = match.group(2)
+            else:
+                failed_node_name = failed_node_id = None
+
+            # Send error to user
+            error_msg = str(e)
+            print("error message", error_msg)
+            await websocket.send_json(
+                {
+                    "message": "Workflow execution failed",
+                    "error": error_msg,
+                    "failed_node_name": failed_node_name,
+                    "failed_node_id": failed_node_id,
+                }
+            )
 
     except WebSocketDisconnect:
         print(f"User {user_id} disconnected.")

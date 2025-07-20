@@ -256,6 +256,7 @@ export default function HttpRequestDetals({
 
       updateNodeData(node.id, {
         ...node.data,
+        error: null,
         state: {
           httpMethod,
           credentialId,

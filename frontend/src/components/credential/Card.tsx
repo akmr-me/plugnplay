@@ -4,16 +4,46 @@ import { Card, CardContent } from "../ui/card";
 import { Edit2, Trash2 } from "lucide-react";
 import { useAuth, useUser } from "@clerk/nextjs";
 import { deleteCredential } from "@/service/node";
+import { toast } from "sonner";
+import { useState } from "react";
 
-const CredentialCard = ({ credential }) => {
+interface Credential {
+  id: string;
+  name: string;
+  type: string;
+  description?: string;
+  created_at: string;
+}
+
+interface CredentialCardProps {
+  credential: Credential;
+  fetchCredentials: () => Promise<void>;
+}
+
+const CredentialCard = ({
+  credential,
+  fetchCredentials,
+}: CredentialCardProps) => {
   const { getToken } = useAuth();
   const { user } = useUser();
+  const [isDeleting, setIsDeleting] = useState(false);
   const IconComponent = CREDENTIAL_TYPES[credential.type]?.icon;
 
   const handleDelete = async () => {
     const token = await getToken();
     if (!token || !user?.id) return;
-    await deleteCredential(token, user.id, credential.id);
+    try {
+      setIsDeleting(true);
+      await deleteCredential(token, user.id, credential.id);
+      await fetchCredentials();
+      toast.success("Credential deleted successfully!");
+    } catch (error) {
+      toast.error("Failed to delete credential.", {
+        description: error.message,
+      });
+    } finally {
+      setIsDeleting(false);
+    }
   };
 
   return (
@@ -64,9 +94,10 @@ const CredentialCard = ({ credential }) => {
                 <Edit2 className="w-4 h-4" />
               </button> */}
               <button
-                className="p-1.5 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-md transition-colors"
+                className="p-1.5 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-md transition-colors cursor-pointer"
                 title="Delete credential"
                 onClick={handleDelete}
+                disabled={isDeleting}
               >
                 <Trash2 className="w-4 h-4" />
               </button>

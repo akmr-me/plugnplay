@@ -22,12 +22,12 @@ export default function TextNode({
       <div className="h-12 relative">
         <Button variant="default" className="w-16 h-16">
           {<IconComponent />}
-          <Terminal
+          {/* <Terminal
             style={{ right: "0%", top: "70%" }}
             type="source"
             position={Position.Right}
             id="right"
-          />
+          /> */}
           <Terminal
             style={{ left: "0%", top: "70%" }}
             type="target"

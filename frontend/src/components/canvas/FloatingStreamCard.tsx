@@ -1,18 +1,27 @@
-import React, { useState } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { X, Minimize2, Monitor, Copy, RotateCcw } from "lucide-react";
 import { toast } from "sonner";
+import ErrorMessage from "../ErrorMessage";
 
-type StreamDataItem = {
-  id: string;
-  type: string;
+export type BadgeType =
+  | "tool"
+  | "trigger"
+  | "start"
+  | "end"
+  | "output"
+  | "error";
+
+export type StreamDataItem = {
+  id: string | number;
+  type: BadgeType;
   title: string;
   description: string;
   details: string;
-  timestamp: number;
+  timestamp: string;
 };
 
 interface FloatingStreamCardProps {
@@ -30,23 +39,24 @@ const FloatingStreamCard: React.FC<FloatingStreamCardProps> = ({
   setIsMinimized,
   resetStreamData,
 }) => {
-  const [selectedItem, setSelectedItem] = useState(null);
+  const [selectedItem, setSelectedItem] = useState<StreamDataItem | null>(null);
+  const cardRef = useRef<HTMLDivElement>(null);
 
-  const getTypeColor = (
-    type: "tool" | "trigger" | "start" | "end" | "output"
-  ) => {
+  const getTypeColor = (type: BadgeType) => {
     const colors = {
-      tool: "bg-blue-500 hover:bg-blue-600",
-      trigger: "bg-purple-500 hover:bg-purple-600",
+      tool: "bg-slate-500 hover:bg-slate-600",
+      trigger: "bg-yellow-500 hover:bg-yellow-600",
       start: "bg-green-500 hover:bg-green-600",
-      end: "bg-red-500 hover:bg-red-600",
-      output: "bg-orange-500 hover:bg-orange-600",
+      end: "bg-blue-500 hover:bg-blue-600",
+      output: "bg-teal-500 hover:bg-teal-600",
+      error: "bg-red-500 hover:bg-red-600",
     };
+
     return colors[type] || "bg-gray-500 hover:bg-gray-600";
   };
 
   interface FormatTime {
-    (timestamp: number): string;
+    (timestamp: string): string;
   }
 
   const formatTime: FormatTime = (timestamp) => {
@@ -63,6 +73,10 @@ const FloatingStreamCard: React.FC<FloatingStreamCardProps> = ({
         console.error("Failed to copy: ", err);
       });
   };
+
+  useEffect(() => {
+    cardRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [streamData]);
 
   if (isMinimized) {
     return (
@@ -155,9 +169,13 @@ const FloatingStreamCard: React.FC<FloatingStreamCardProps> = ({
 
                   <div>
                     <h4 className="font-medium text-xs mb-1">Details</h4>
-                    <p className="text-xs text-muted-foreground leading-relaxed">
-                      {selectedItem.details}
-                    </p>
+                    {selectedItem.type === "error" ? (
+                      <ErrorMessage message={selectedItem.details} />
+                    ) : (
+                      <p className="text-xs text-muted-foreground leading-relaxed break-all whitespace-pre-wrap">
+                        {selectedItem.details}
+                      </p>
+                    )}
                   </div>
                 </div>
               </ScrollArea>
@@ -237,6 +255,7 @@ const FloatingStreamCard: React.FC<FloatingStreamCardProps> = ({
                   ))
                 )}
               </div>
+              <div id="sentinel" ref={cardRef} />
             </ScrollArea>
           )}
         </CardContent>

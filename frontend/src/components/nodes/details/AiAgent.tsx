@@ -1,7 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
   Select,
@@ -14,15 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 
-import {
-  Eye,
-  EyeOff,
-  Settings,
-  Copy,
-  TestTube,
-  Brain,
-  Zap,
-} from "lucide-react";
+import { Settings, TestTube, Brain } from "lucide-react";
 import DetailsModal from "./Modal";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import WorkflowJSON, { getInputOrOutPutData } from "./WorkflowJSON";
@@ -32,11 +23,21 @@ import { useReactFlow } from "@xyflow/react";
 import { handleTestNode } from "@/service/node";
 import { toast } from "sonner";
 import { WorkflowTemplateParser } from "@/lib/parser";
+import { openAIModels, responseFormats } from "@/constants";
 
-export default function OpenAIDetails({ setSelectedNode, node }) {
+type OpenAIDetailsProps = {
+  setSelectedNode: (node: unknown) => void;
+  node: unknown;
+};
+
+export default function OpenAIDetails({
+  setSelectedNode,
+  node,
+}: OpenAIDetailsProps) {
   const { getToken } = useAuth();
   const { getNodes, getEdges, updateNodeData } = useReactFlow();
   const [loading, setLoading] = useState(false);
+  const [saved, setSaved] = useState(true);
 
   // OpenAI Configuration States
   const [description, setDescription] = useState(
@@ -58,22 +59,6 @@ export default function OpenAIDetails({ setSelectedNode, node }) {
   );
 
   // Available OpenAI Models
-  const openAIModels = [
-    { value: "gpt-4-turbo", label: "GPT-4 Turbo", enabled: true },
-    { value: "gpt-3.5-turbo", label: "GPT-3.5 Turbo", enabled: true },
-    { value: "gpt-4o", label: "GPT-4o", enabled: true },
-    { value: "gpt-4", label: "GPT-4", enabled: false },
-    { value: "gpt-4o-mini", label: "GPT-4o Mini", enabled: false },
-    { value: "dall-e-3", label: "DALL-E 3", enabled: false },
-    { value: "whisper-1", label: "Whisper", enabled: false },
-  ];
-
-  // Response Format Options
-  const responseFormats = [
-    { value: "text", label: "Text", disabled: true },
-    { value: "json", label: "JSON" },
-    { value: "structured", label: "Structured", disabled: true },
-  ];
 
   const handleSaveOpenAIConfiguration = async () => {
     const token = await getToken();
@@ -91,7 +76,9 @@ export default function OpenAIDetails({ setSelectedNode, node }) {
       updateNodeData(node.id, {
         ...node.data,
         state: state,
+        error: null,
       });
+      setSaved(true);
       toast.info("OpenAI configuration saved successfully!");
     } catch (error) {
       toast.error("Error saving OpenAI config:", {
@@ -103,6 +90,14 @@ export default function OpenAIDetails({ setSelectedNode, node }) {
   const handleTestConfiguration = async () => {
     const token = await getToken();
     if (!token) return;
+    if (!saved) {
+      const userConfirmation = confirm(
+        "You have unsaved changes. Do you want to save them before testing?"
+      );
+      if (userConfirmation) {
+        await handleSaveOpenAIConfiguration();
+      }
+    }
     const parser = new WorkflowTemplateParser();
     const flow = {
       nodes: getNodes(),
@@ -132,6 +127,18 @@ export default function OpenAIDetails({ setSelectedNode, node }) {
       toast.success("OpenAI configuration tested successfully!");
     }
   };
+
+  useEffect(() => {
+    setSaved(false);
+  }, [
+    loading,
+    description,
+    model,
+    prompt,
+    systemPrompt,
+    responseFormat,
+    credentialId,
+  ]);
 
   return (
     <DetailsModal setSelectedNode={setSelectedNode}>
@@ -329,7 +336,7 @@ export default function OpenAIDetails({ setSelectedNode, node }) {
                 className="flex-1"
                 size="sm"
                 onClick={handleSaveOpenAIConfiguration}
-                disabled={loading}
+                disabled={saved || loading}
               >
                 <Settings className="h-3 w-3 mr-1" />
                 Save Configuration

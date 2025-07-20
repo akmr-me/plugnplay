@@ -83,7 +83,7 @@ async def http_programming_tool_node(state: dict, node_id: str) -> dict:
     template = state["state"]["nodes"][node_id]["data"]["state"]
     parsed_data = parser.parse_templates(template, state["input"])
     # print(parsed_data)
-    response = {"message": "Success"} | await send_custom_http_request(parsed_data)
+    response = await send_custom_http_request(parsed_data)
     # print("HTTP Response:", response)
     # print()
     # print()

@@ -29,6 +29,8 @@ export type NodeData = {
   output?: Record<string, unknown>;
   run(): Promise<unknown>;
   state: Record<string, unknown>;
+  error?: string;
+  description?: string;
 };
 
 export type Flow = {

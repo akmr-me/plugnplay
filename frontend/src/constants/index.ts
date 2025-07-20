@@ -147,3 +147,20 @@ export const CREDENTIAL_TYPES = {
     fields: [],
   },
 };
+
+export const openAIModels = [
+  { value: "gpt-4-turbo", label: "GPT-4 Turbo", enabled: true },
+  { value: "gpt-3.5-turbo", label: "GPT-3.5 Turbo", enabled: true },
+  { value: "gpt-4o", label: "GPT-4o", enabled: true },
+  { value: "gpt-4", label: "GPT-4", enabled: false },
+  { value: "gpt-4o-mini", label: "GPT-4o Mini", enabled: false },
+  { value: "dall-e-3", label: "DALL-E 3", enabled: false },
+  { value: "whisper-1", label: "Whisper", enabled: false },
+];
+
+// Response Format Options
+export const responseFormats = [
+  { value: "text", label: "Text", disabled: true },
+  { value: "json", label: "JSON" },
+  { value: "structured", label: "Structured", disabled: true },
+];

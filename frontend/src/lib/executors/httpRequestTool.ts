@@ -44,7 +44,7 @@ export default async function httpRequest(
     headers: initialHeaders,
     includeHeaders,
     authType,
-    authToken,
+    // authToken,
     credentialId,
     url: initialUrl,
     httpMethod,

@@ -1,5 +1,6 @@
 "use client";
-import { Download, Play, Rss } from "lucide-react";
+
+import { Download, Play } from "lucide-react";
 import { Button } from "../ui/button";
 import { useReactFlow } from "@xyflow/react";
 import { useFlowActions, useFlowSelectors } from "@/stores";
@@ -11,20 +12,23 @@ import { useAuth, useUser } from "@clerk/nextjs";
 import { toast } from "sonner";
 // import { connectToWebSocket, executeWorkflow } from "@/service/node";
 import { filterUnusedEdges } from "@/lib/filterEdges";
-import FloatingStreamCard from "./FloatingStreamCard";
+import FloatingStreamCard, { StreamDataItem } from "./FloatingStreamCard";
 import { useState } from "react";
 import { useParams } from "next/navigation";
 
 export default function PlayNPublishButtonGroup() {
   const { getToken } = useAuth();
   const { user } = useUser();
-  const { getNodes, getEdges, getViewport, updateEdgeData } = useReactFlow();
+  const { getNodes, getEdges, getViewport, updateEdgeData, updateNodeData } =
+    useReactFlow();
   const { currentFlow, currentProject, needsSave } = useFlowSelectors();
   const { saveWorkflow, setCurrentFlow } = useFlowActions();
   const [isConnected, setIsConnected] = useState(false);
-  const [streamData, setStreamData] = useState([]);
+  const [streamData, setStreamData] = useState<StreamDataItem[]>([]);
   const [isMinimized, setIsMinimized] = useState(true);
+  const [loading, setLoading] = useState(false);
   const params = useParams();
+
   const isFlowPage = params?.flowId && params?.projectId;
 
   const resetStreamData = () => setStreamData([]);
@@ -32,17 +36,18 @@ export default function PlayNPublishButtonGroup() {
   const handleSaveWorkFlow = async () => {
     const token = await getToken();
     if (!token || !user?.id || !currentFlow || !currentProject) return;
+
     const data = filterUnusedEdges({
       nodes: getNodes(),
       edges: getEdges(),
       viewport: getViewport(),
     });
-    console.log("filtered", data);
+
     const projectId = currentProject?.id;
     const flowId = currentFlow.id;
     try {
+      setLoading(true);
       await updateWorkFlow(token, user.id, projectId, flowId, data);
-      // Get Work flow and update
       const workflow = await getFlowDetailsByProjectAndFlowId(
         token,
         user.id,
@@ -57,6 +62,8 @@ export default function PlayNPublishButtonGroup() {
         description:
           error instanceof Error ? error.message : "An unknown error occurred",
       });
+    } finally {
+      setLoading(false);
     }
   };
   const connectToWebSocket = (workflowId: string, token: string) => {
@@ -68,22 +75,23 @@ export default function PlayNPublishButtonGroup() {
       console.log("✅ WebSocket connected");
       setIsConnected(true);
       setIsMinimized(false);
+      // Starting message
+      const startMessage: StreamDataItem = {
+        id: Date.now(),
+        title: "Workflow Execution Started",
+        description: "The workflow execution has started.",
+        timestamp: new Date().toISOString(),
+        type: "start",
+        details: "No additional details available.",
+      };
+      setStreamData((prev) => [...prev, startMessage]);
     };
 
     socket.onmessage = (event) => {
-      // {
-      //   id: 1,
-      //   title: "User Authentication",
-      //   description: "New user login detected from IP 192.168.1.1",
-      //   timestamp: new Date().toISOString(),
-      //   type: "auth",
-      //   details:
-      //     "User john.doe@example.com successfully authenticated using OAuth2. Session ID: abc123xyz. Device: Chrome on Windows 10. Location: New York, USA.",
-      // },
-      // formate data here
       try {
         const data = JSON.parse(event.data);
         const edges = getEdges();
+        const nodes = getNodes();
         if (data?.chunk) {
           const currentNode = Object.keys(data.chunk)[0];
           const currentData = data.chunk[currentNode].state.nodes[currentNode];
@@ -103,7 +111,7 @@ export default function PlayNPublishButtonGroup() {
             });
           }
 
-          const newStreamData: Record<string, unknown> = {
+          const newStreamData: StreamDataItem = {
             id: currentData.id + Date.now(),
             title: currentData.type,
             description:
@@ -111,7 +119,6 @@ export default function PlayNPublishButtonGroup() {
               data.message ||
               "Being processed",
             timestamp: new Date().toISOString(),
-            actualType: currentData.type,
             type:
               currentData.type === "text-other-tool"
                 ? "output"
@@ -124,27 +131,59 @@ export default function PlayNPublishButtonGroup() {
           };
           setStreamData((prev) => [...prev, newStreamData]);
         } else {
-          const startOrEnd =
-            data.message === "Workflow executed successfully" ? "end" : "start";
-          const messageData = {
-            id: Date.now(),
-            title: startOrEnd,
-            description: data.message || "No description provided",
-            timestamp: new Date().toISOString(),
-            type: startOrEnd || "info",
-            details: data.details || "No details available",
-          };
-          setStreamData((prev) => [...prev, messageData]);
-          if (startOrEnd === "end") {
-            setIsConnected(false);
-            edges.forEach((e) => {
-              updateEdgeData(e.id, {
-                activate: false,
+          if (data.error) {
+            const nodeId = data?.failed_node_name;
+            const node = nodes.find((e) => e.id === nodeId);
+
+            if (node) {
+              updateNodeData(nodeId, {
+                ...node.data,
+                error: data.error || "An error occurred",
               });
-            });
+            }
+
+            toast.error("Error while running workflow");
+            const messageData: StreamDataItem = {
+              id: Date.now(),
+              title: "Error",
+              description: data.message || "No description provided",
+              timestamp: new Date().toISOString(),
+              type: "error",
+              details: data.error || "No details available",
+            };
+            setStreamData((prev) => [...prev, messageData]);
+            setIsConnected(false);
+          } else {
+            const startOrEnd =
+              data.message === "Workflow executed successfully"
+                ? "end"
+                : "start";
+            if (data.message === "Workflow executed successfully") {
+              toast.success("Workflow executed successfully");
+              nodes.forEach((node) => {
+                updateNodeData(node.id, {
+                  ...node.data,
+                  error: null,
+                });
+              });
+            }
+            const messageData: StreamDataItem = {
+              id: Date.now(),
+              title: startOrEnd,
+              description: data.message || "No description provided",
+              timestamp: new Date().toISOString(),
+              type: startOrEnd || "info",
+              details: data.details || "No details available",
+            };
+            setStreamData((prev) => [...prev, messageData]);
           }
+          setIsConnected(false);
+          edges.forEach((e) => {
+            updateEdgeData(e.id, {
+              activate: false,
+            });
+          });
         }
-        console.log("📨 Received from server:", data);
       } catch (error) {
         console.error("Error parsing WebSocket message:", error);
         toast.error("Error while processing webflow message", {
@@ -173,7 +212,7 @@ export default function PlayNPublishButtonGroup() {
   };
   const handleRunWorkflow = async () => {
     const token = await getToken();
-    if (!token) return;
+    if (!token || !currentFlow?.id) return;
     if (needsSave) {
       const userConfirmation = confirm(
         "You want to save your changes before running the workflow? Are you sure you want to continue?"
@@ -182,8 +221,8 @@ export default function PlayNPublishButtonGroup() {
     }
     saveWorkflow();
     // await executeWorkflow(token, currentFlow?.id);
-    const wsresponse = await connectToWebSocket(currentFlow?.id, token);
-    console.log("WebSocket response:", wsresponse);
+    await connectToWebSocket(currentFlow?.id, token);
+    // console.log("WebSocket response:", wsresponse);
   };
 
   return (
@@ -193,7 +232,8 @@ export default function PlayNPublishButtonGroup() {
         size="sm"
         className="cursor-pointer"
         onClick={handleSaveWorkFlow}
-        disabled={!needsSave}
+        disabled={!needsSave || loading}
+        loading={loading}
       >
         <Download /> Save
       </Button>
@@ -202,7 +242,8 @@ export default function PlayNPublishButtonGroup() {
         size="sm"
         className="cursor-pointer"
         onClick={handleRunWorkflow}
-        disabled={!isFlowPage}
+        disabled={!isFlowPage || isConnected}
+        loading={isConnected}
       >
         <Play /> Run Workflow
       </Button>

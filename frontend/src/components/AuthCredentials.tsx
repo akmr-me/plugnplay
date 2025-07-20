@@ -34,13 +34,13 @@ export function CustomCombobox({
   useEffect(() => {
     async function credentialOptions() {
       const token = await getToken();
-      if (!token) return;
+      if (!token || !user) return;
       const data = await getAllCredential(token, user.id);
       // console.log("tokens", { data });
       setCredentialTypes(data);
     }
-    credentialOptions();
-  }, []);
+    if (open || !credentialTypes.length) credentialOptions();
+  }, [open, getToken, user]);
 
   // Find the selected credential to display its label
   const selectedCredential = credentialTypes.find(
@@ -176,7 +176,7 @@ export function CustomCombobox({
 }
 
 // Demo component showing usage
-export default function AuthCredentials({ authToken, setAuthToken, onChange }) {
+export default function AuthCredentials({ authToken, setAuthToken }) {
   const [showCredentialModal, setShowCredentialModal] = useState(false);
 
   const handleAuthTokenChange = (newValue: string) => {

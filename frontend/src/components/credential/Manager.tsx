@@ -81,7 +81,11 @@ export default function CredentialManager() {
             </div>
           ) : (
             credentials.map((credential) => (
-              <CredentialCard key={credential.id} credential={credential} />
+              <CredentialCard
+                key={credential.id}
+                credential={credential}
+                fetchCredentials={fetchCredentials}
+              />
             ))
           )}
         </div>
