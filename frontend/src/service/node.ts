@@ -428,7 +428,7 @@ export const publishWorkflow = async (
 };
 
 export const getTemplates = async (token: string, user_id: string) => {
-  const EndPoint = process.env.NEXT_PUBLIC_API_URL + user_id + "/template/";
+  const EndPoint = process.env.NEXT_PUBLIC_API_URL + user_id + "/template";
   const response = await fetch(EndPoint, {
     method: "GET",
     headers: {
