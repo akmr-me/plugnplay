@@ -33,10 +33,17 @@ class WorkflowTemplateParser:
             expression = match.group(1)
             try:
                 value = self.resolve_expression(expression, context)
+                if value is None:
+                    raise ValueError(
+                        f"Given expression cannot be resolved: {match.group(0)}"
+                    )
                 return str(value) if value is not None else match.group(0)
             except Exception as e:
                 print(
                     f"Warning: Failed to resolve template: {match.group(0)}. Error: {e}"
+                )
+                raise ValueError(
+                    f"Given expression cannot be resolved: {match.group(0)}"
                 )
                 return match.group(0)  # Return original if can't resolve
 

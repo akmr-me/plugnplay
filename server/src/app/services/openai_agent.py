@@ -60,11 +60,11 @@ async def structure_invocation(data):
     prompt = data.get("prompt")
     system_prompt = data.get("system_prompt")
     response_format = data.get("response_format")
-    # print()
-    # print()
+    # # print()
+    # # print()
     # print("credential_id", data)
-    # print()
-    # print()
+    # # print()
+    # # print()
 
     credential = await crud_credentials.get(
         db=db, id=credential_id, schema_to_select=CredentialRead

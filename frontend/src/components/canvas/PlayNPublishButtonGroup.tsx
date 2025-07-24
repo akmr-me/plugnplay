@@ -15,6 +15,7 @@ import { filterUnusedEdges } from "@/lib/filterEdges";
 import FloatingStreamCard, { StreamDataItem } from "./FloatingStreamCard";
 import { useState } from "react";
 import { useParams } from "next/navigation";
+import PublishWorkflow from "../PublishWorkflow";
 
 export default function PlayNPublishButtonGroup() {
   const { getToken } = useAuth();
@@ -247,9 +248,7 @@ export default function PlayNPublishButtonGroup() {
       >
         <Play /> Run Workflow
       </Button>
-      {/* <Button variant="outline" size="sm" className="cursor-pointer">
-        <Rss /> Publish
-      </Button> */}
+      <PublishWorkflow />
       <FloatingStreamCard
         isConnected={isConnected}
         streamData={streamData}

@@ -25,6 +25,7 @@ import { useAuth } from "@clerk/nextjs";
 import { fieldTypes } from "@/constants";
 import FieldEditor from "./form/FieldEditor";
 import PreviewField from "./form/PreviewField";
+import { useParams } from "next/navigation";
 
 type FormState = {
   formTitle?: string;
@@ -38,9 +39,12 @@ const FormBuilder = ({
   node: Node & { workflowId: string };
   setSelectedNode: React.SetStateAction<AppNode | undefined>;
 }) => {
+  console.log("node", node);
   const { id, data } = node;
+  console.log("data", data);
   const { getToken } = useAuth();
   const { updateNodeData } = useReactFlow();
+  const params = useParams();
   const [shouldRerender, setShouldRerender] = useState(false);
   const [isPreviewMode, setIsPreviewMode] = useState(false);
 
@@ -51,7 +55,7 @@ const FormBuilder = ({
     (data.state as FormState)?.formDescription || ""
   );
   const [fields, setFields] = useState<FieldType[]>(
-    (data.fields as FieldType[]) || []
+    (data.state as FormState[])?.fields || []
   );
   const [formResponses, setFormResponses] = useState<Record<string, string>>(
     {}
@@ -150,15 +154,27 @@ const FormBuilder = ({
           formId: node.workflowId,
         },
       });
+      console.log({ serverFields });
       setFields(serverFields);
       setFormDescription(description);
       setFormTitle(title);
     };
-    updateForm();
+    if (!params.templateId) updateForm();
   }, []);
 
-  const formURL = process.env.NEXT_PUBLIC_API_URL + "form/" + node.workflowId;
+  useEffect(() => {
+    console.log("fields", fields);
+    updateNodeData(id, {
+      ...node.data,
+      state: {
+        ...(node.data?.state || {}),
+        fields,
+      },
+    });
+  }, [fields]);
 
+  const formURL = process.env.NEXT_PUBLIC_API_URL + "form/" + node.workflowId;
+  console.log("node", node);
   const handleChangeFormTitle = async (
     e: React.ChangeEvent<HTMLInputElement>
   ) => {
@@ -180,8 +196,8 @@ const FormBuilder = ({
     e: React.ChangeEvent<HTMLTextAreaElement>
   ) => {
     const description = e.target.value;
-    if (!description) return;
     setFormDescription(e.target.value);
+    if (!description) return;
     updateNodeData(id, {
       ...node.data,
       state: {
@@ -252,7 +268,7 @@ const FormBuilder = ({
                   </Button>
                 </div>
               </div>
-              <UrlCopyComponent url={formURL} />
+              {!params.templateId && <UrlCopyComponent url={formURL} />}
             </CardHeader>
 
             <CardContent className="space-y-6">

@@ -80,6 +80,7 @@ class FirstUserSettings(BaseSettings):
     ADMIN_EMAIL: str = config("ADMIN_EMAIL", default="admin@admin.com")
     ADMIN_USERNAME: str = config("ADMIN_USERNAME", default="admin")
     ADMIN_PASSWORD: str = config("ADMIN_PASSWORD", default="!Ch4ng3Th1sP4ssW0rd!")
+    ADMIN_EMAIL_ID: str = config("ADMIN_EMAIL_ID", default="")
 
 
 class TestSettings(BaseSettings): ...

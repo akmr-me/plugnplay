@@ -1,18 +1,14 @@
 "use client";
-import { useCallback, useEffect, useRef, useState } from "react";
+
+import { useEffect, useRef, useState } from "react";
 import {
   Background,
   Controls,
   MiniMap,
   ReactFlow,
-  // addEdge,
-  // type OnConnect,
   useEdgesState,
   useNodesState,
-  Connection,
-  Edge,
   ColorMode,
-  Panel,
   useReactFlow,
   OnNodeDrag,
   useViewport,
@@ -20,11 +16,10 @@ import {
 
 import "@xyflow/react/dist/style.css";
 
-import { nodeTypes, startNode, TriggerNodeDescription } from "../../data/nodes";
+import { nodeTypes, startNode } from "../../data/nodes";
 import { edgeTypes } from "../../data/edges";
 import ConnectionLine from "../nodes/ConnectionLine";
 import { useTheme } from "next-themes";
-import Triggers from "./Triggers";
 import { AppNode, NodeType } from "@/types";
 import {
   useFlowActions,
@@ -32,10 +27,8 @@ import {
   useSettingsActions,
   useSettingsSelectors,
 } from "@/stores";
-import { createEdge, createNode, isPointInBox } from "@/lib/flow";
+import { createNode, isPointInBox } from "@/lib/flow";
 import useHistory from "@/hooks/useHistory";
-import Tools from "./Tools";
-import ChatBox from "../nodes/details/ChatBox";
 import FormBuilder from "../nodes/details/FormBuilder";
 import useKeyBindings from "@/hooks/useKeyBindings";
 import Webhook from "../nodes/details/Webhook";
@@ -47,7 +40,7 @@ import GmailDetails from "../nodes/details/Gmail";
 import OpenAIDetails from "../nodes/details/AiAgent";
 import TextDetails from "../nodes/details/TextDetails";
 
-export default function Flow() {
+export default function TemplateFlow() {
   const [selectedNode, setSelectedNode] = useState<
     Node | AppNode | undefined
   >();
@@ -55,7 +48,7 @@ export default function Flow() {
   const { theme } = useTheme();
   const { currentFlow, draggingNodeType } = useFlowSelectors();
   const { addEdgeToFlow, updateFlow } = useFlowActions();
-  const { addNode, addEdge } = useHistory();
+  const { addNode } = useHistory();
   const [nodes, setNodes, onNodesChange] = useNodesState(
     currentFlow?.nodes || []
   );
@@ -75,23 +68,6 @@ export default function Flow() {
   const draggedNode = useRef<Node | null>(null);
 
   useKeyBindings();
-
-  const onConnect = useCallback(
-    (connection: Connection) => {
-      // Create Edge
-      const data = { activate: false };
-      const newEdge = createEdge(data, connection);
-      addEdge(newEdge);
-    },
-    [addEdge]
-  );
-
-  const isValidConnection = (connection: Edge | Connection) => {
-    const { source, target } = connection;
-    // not be able to connect to same node
-    if (source == target) return false;
-    return true;
-  };
 
   const onNodeClick = (event: React.MouseEvent<Element>, node: AppNode) => {
     setSelectedNode(node);
@@ -199,16 +175,11 @@ export default function Flow() {
       });
     }
   };
-
+  console.log(currentFlow);
   const onNodeDragStart = (evt, dragNode) => {
     draggedNode.current = dragNode;
   };
-  // const viewport = getViewport();
 
-  const shouldShowTools =
-    nodes.length >= 1 &&
-    nodes.some((n) => n.type !== NodeType.NewFlow) &&
-    nodes.find((n) => n.type.includes("trigger"));
   const NInputComponent = selectedNode
     ? NodeInputComponent[selectedNode.type]
     : null;
@@ -217,36 +188,10 @@ export default function Flow() {
       updateFlow({ ...currentFlow, viewport });
     }
   }, [viewport]);
-  const handleEdgeChange = (e, edgeProp) => {
-    setEdges((edges) =>
-      edges.map((edge) => {
-        if (edge.id === edgeProp.id) {
-          return { ...edge, style: { stroke: "green" }, selected: true };
-        } else {
-          return edge;
-        }
-      })
-    );
-  };
 
-  const handleEdgeMouseLeave = (e, edge) => {
-    setEdges((edges) =>
-      edges.map((edg) => {
-        if (edg.id === edge.id) {
-          return { ...edg, style: { stroke: "red" }, selected: false };
-        } else {
-          return edg;
-        }
-      })
-    );
-  };
   return (
-    <div
-      className="w-full h-h-[calc(100vh-2.75rem)] min-h-[calc(100vh-2.75rem)]"
-      // onKeyDown={handleKeyDown}
-    >
+    <div className="w-full h-h-[calc(100vh-2.75rem)] min-h-[calc(100vh-2.75rem)]">
       <ReactFlow
-        // onInit={setReactFlowInstance}
         nodes={nodes}
         key={currentFlow?.name}
         nodeTypes={nodeTypes}
@@ -254,46 +199,17 @@ export default function Flow() {
         edges={edges}
         edgeTypes={edgeTypes}
         onEdgesChange={onEdgesChange}
-        onConnect={onConnect}
-        // fitView
-        onEdgeMouseEnter={(e, edge) => handleEdgeChange(e, edge)}
-        onEdgeMouseLeave={(e, edge) => handleEdgeMouseLeave(e, edge)}
         connectionLineComponent={ConnectionLine}
-        isValidConnection={isValidConnection}
         onDragOver={handleDragOver}
         onDrop={handleDrop}
         onNodeClick={onNodeClick}
         onPaneClick={onPaneClick}
         defaultViewport={currentFlow?.viewport}
-        // onReconnectStart={onReconnectStart}
-        // onReconnect={onReconnect}
-        // onReconnectEnd={onReconnectEnd}
         onNodeDrag={onNodeDrag}
-        // onNodeDragStop={onNodeDragStop}
         onNodeDragStop={onNodeDragStop}
         onNodeDragStart={onNodeDragStart}
         colorMode={theme as ColorMode}
-        onDelete={(...e) => {
-          console.log("on node delete", e);
-        }}
       >
-        <Panel
-          position="top-right"
-          style={{
-            border: "1px solid #ccc",
-            padding: 12,
-            borderRadius: 12,
-            background: isDark ? "black" : "white",
-            width: "24rem",
-            visibility: showPanel ? "visible" : "hidden",
-          }}
-        >
-          {shouldShowTools ? (
-            <Tools tools={TriggerNodeDescription} />
-          ) : (
-            <Triggers tools={TriggerNodeDescription} />
-          )}
-        </Panel>
         <Background />
         {showMiniMap && <MiniMap />}
         <Controls />

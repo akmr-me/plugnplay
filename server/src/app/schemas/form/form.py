@@ -50,7 +50,8 @@ class FormReadPatch(FormBase):
 
 
 class FormCreate(BaseModel):
-    model_config = ConfigDict(extra="forbid")
+    # model_config = ConfigDict(extra="forbid")
+    model_config = ConfigDict(extra="ignore")
 
     title: Annotated[str, Field(min_length=3, max_length=100)]
     description: Annotated[str, Field(min_length=0, max_length=500)]

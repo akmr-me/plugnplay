@@ -38,6 +38,8 @@ export function getInputOrOutPutData(
     console.log({ upStreamNodeIds });
     return upStreamNodeIds.reduce((acc, nodeId) => {
       const node = nodes.find((node) => node.id === nodeId);
+      console.log("found", { node });
+      if (!node || node.type == "manual-trigger") return acc;
       return { ...acc, [node?.type as string]: node?.data.output };
     }, {});
   }

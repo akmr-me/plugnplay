@@ -391,3 +391,130 @@ export const getWorkflow = async (token: string, workflowId: string) => {
   });
   return await response.json();
 };
+
+export const publishWorkflow = async (
+  token: string,
+  user_id: string,
+  workflowId: string,
+  projectId: string,
+  { name, description }: { name: string; description: string }
+) => {
+  const EndPoint =
+    process.env.NEXT_PUBLIC_API_URL +
+    user_id +
+    "/project/" +
+    projectId +
+    "/template/" +
+    workflowId;
+  const response = await fetch(EndPoint, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({
+      name,
+      description,
+    }),
+  });
+  if (response.status >= 400) {
+    const errorText = await response.text();
+    console.error("Error publishing workflow:", errorText);
+    throw new Error(`Failed to publish workflow: ${errorText}`);
+  }
+
+  return await response.json();
+  // return await response.json();
+};
+
+export const getTemplates = async (token: string, user_id: string) => {
+  const EndPoint = process.env.NEXT_PUBLIC_API_URL + user_id + "/template/";
+  const response = await fetch(EndPoint, {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+  });
+  if (response.status >= 400) {
+    const errorText = await response.text();
+    console.error("Error fetching templates:", errorText);
+    throw new Error(`Failed to fetch templates: ${errorText}`);
+  }
+
+  return await response.json();
+};
+
+export const getTemplate = async (
+  token: string,
+  user_id: string,
+  templateId: string
+) => {
+  const EndPoint =
+    process.env.NEXT_PUBLIC_API_URL + user_id + "/template/" + templateId;
+  const response = await fetch(EndPoint, {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+  });
+  if (response.status >= 400) {
+    const errorText = await response.text();
+    console.error("Error fetching templates:", errorText);
+    throw new Error(`Failed to fetch templates: ${errorText}`);
+  }
+
+  return await response.json();
+};
+
+export const deleteTemplate = async (
+  token: string,
+  user_id: string,
+  templateId: string
+) => {
+  const EndPoint =
+    process.env.NEXT_PUBLIC_API_URL + user_id + "/template/" + templateId;
+  const response = await fetch(EndPoint, {
+    method: "DELETE",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+  });
+  return response.status;
+};
+
+export const forkTemplate = async (
+  token: string,
+  user_id: string,
+  templateId: string,
+  flowname: string,
+  projectId: string
+) => {
+  const EndPoint =
+    process.env.NEXT_PUBLIC_API_URL +
+    user_id +
+    "/template/" +
+    templateId +
+    "/project/" +
+    projectId +
+    "/fork";
+  const response = await fetch(EndPoint, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({
+      name: flowname,
+      description: `This is a new workflow created from template ${templateId}.`,
+    }),
+  });
+  if (response.status >= 400) {
+    const errorText = await response.text();
+    console.error("Error fetching templates:", errorText);
+    throw new Error(`Failed to fetch templates: ${errorText}`);
+  }
+  return response;
+};

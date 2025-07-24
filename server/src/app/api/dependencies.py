@@ -69,7 +69,7 @@ async def get_current_user(
     # Extract user info
     user_id = payload["sub"]
     email = payload.get("email")
-    print(email)
+
     # Optionally sync user in DB
     user = await sync_user_to_db(user_id, email, db)
 

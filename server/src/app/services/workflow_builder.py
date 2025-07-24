@@ -107,6 +107,7 @@ NODE_FUNCTION_MAP: Dict[NodeType, Callable[[dict], dict]] = {
     NodeType.OPEN_AI_TOOLS: open_ai_tool_node,
     NodeType.HTTP_PROGRAMMING_TOOLS: http_programming_tool_node,
     NodeType.TEXT_OTHER_TOOLS: text_other_tool_node,
+    NodeType.MANUAL_TRIGGER: form_trigger_node,
     # Add more mappings as you implement new node types
 }
 
@@ -145,12 +146,24 @@ class WorkflowGraphBuilder:
         all_sources = set(edge["source"] for edge in edges)
         all_targets = set(edge["target"] for edge in edges)
         start_nodes = list(all_sources - all_targets)
+        print(self.workflow["nodes"])
+        trigger_node = next(
+            (
+                node
+                for node in self.workflow["nodes"]
+                if "trigger" in node.get("type", "")
+            ),
+            None,
+        )
+
+        if not trigger_node:
+            raise ValueError("No trigger node found.")
 
         if not start_nodes:
-            raise ValueError("No start node found.")
+            raise ValueError("No start nodes found.")
 
         # Use first start node as entry point
-        self.graph.set_entry_point(start_nodes[0])
+        self.graph.set_entry_point(trigger_node["id"])
 
         # 4. Set end node(s)
         end_nodes = list(all_targets - all_sources)

@@ -1,96 +1,81 @@
 "use client";
-import { useFlowActions, useFlowSelectors } from "@/stores";
-import React from "react";
+import React, { useEffect, useState } from "react";
 import {
   SidebarGroup,
   SidebarGroupContent,
   SidebarGroupLabel,
   SidebarMenu,
-  SidebarMenuButton,
   SidebarMenuSub,
-  SidebarMenuSubItem,
 } from "../../ui/sidebar";
-import { ChevronDown, ChevronRight } from "lucide-react";
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from "@/components/ui/collapsible";
+import { RefreshCcw, Trash2 } from "lucide-react";
+import { Collapsible, CollapsibleContent } from "@/components/ui/collapsible";
+import { deleteTemplate, getTemplates } from "@/service/node";
+import { useAuth, useUser } from "@clerk/nextjs";
+import Link from "next/link";
+import { useParams } from "next/navigation";
+import { toast } from "sonner";
 
-export default function ProjectSidebar() {
-  const { allProjects, currentFlow, currentProject } = useFlowSelectors();
-  const { setCurrentProject, setCurrentFlow } = useFlowActions();
+export default function TemplateSidebar() {
+  const { user } = useUser();
+  const { getToken } = useAuth();
+  const params = useParams();
+  const [templates, setTemplates] = useState([]);
 
-  const mappedData = React.useMemo(() => {
-    return allProjects.map((project) => ({
-      ...project,
-      title: project.name,
-      // url: `/projects/${project.id}`,
-      url: "#",
-      items: project.flows.map((flow) => ({
-        ...flow,
-        title: flow.name,
-        // url: `/projects/${project.id}/flows/${flow.id}`,
-        url: "#",
-        isActive: flow.id === currentFlow?.id,
-      })),
-    }));
-  }, [allProjects, currentFlow]);
+  const getAndSetTemplates = async () => {
+    const token = await getToken();
+    if (!token) return;
+    const response = await getTemplates(token, user?.id);
+    if (response.data) {
+      setTemplates(response.data);
+    }
+    console.log("templates", { response });
+  };
+  useEffect(() => {
+    getAndSetTemplates();
+  }, []);
+
+  const handleDeleteTemplate = async (id: string) => {
+    const token = await getToken();
+    if (!token || !user?.id) return;
+    const userConfirmation = confirm(
+      "Are you sure you want to delete this template? This action cannot be undone."
+    );
+    if (!userConfirmation) return;
+    try {
+      await deleteTemplate(token, user?.id, id);
+      toast.success("Template deleted successfully!");
+      await getAndSetTemplates();
+    } catch (error) {
+      toast.error("Failed to delete template.");
+    }
+  };
 
   return (
     <SidebarGroup key={"Templates"}>
-      <SidebarGroupLabel className="sidebar-group-label">
+      <SidebarGroupLabel className="sidebar-group-label justify-between cursor-pointer">
         {"Templates"}
+        <RefreshCcw onClick={getAndSetTemplates} />
       </SidebarGroupLabel>
-      {mappedData.map((project) => (
-        <SidebarGroupContent key={project.id + "templates"}>
+      {templates.map((template) => (
+        <SidebarGroupContent key={template.id + "templates"}>
           <SidebarMenu>
-            <Collapsible className="group/collapsible">
-              <CollapsibleTrigger asChild>
-                <SidebarMenuButton
-                  isActive={currentProject?.id === project.id}
-                  className="pl-4 flex items-center justify-between cursor-pointer min-w-0"
-                  onClick={() => {
-                    const newProject =
-                      project.id === currentProject?.id ? null : project;
-                    setCurrentProject(newProject);
-                    setCurrentFlow(null);
-                  }}
+            <Collapsible className="group/collapsible" open>
+              <CollapsibleContent className="flex justify-between items-center">
+                <Link
+                  href={`/canvas/template/${template.id}`}
+                  className={
+                    template.id === params.templateId ? "font-bold" : ""
+                  }
                 >
-                  <span
-                  // className="truncate overflow-hidden whitespace-nowrap flex-1 mr-2"
-                  // style={{ maxWidth: "120px" }} // Adjust based on your design
-                  >
-                    {project.title}
-                  </span>
-                  {currentProject?.id === project.id ? (
-                    <ChevronDown className="flex-shrink-0" />
-                  ) : (
-                    <ChevronRight className="flex-shrink-0" />
-                  )}
-                </SidebarMenuButton>
-              </CollapsibleTrigger>
-              <CollapsibleContent>
-                {currentProject?.id === project.id && (
-                  <SidebarMenuSub className="">
-                    {project.items.map((flow) => (
-                      <SidebarMenuSubItem
-                        key={flow.id + "templates"}
-                        className="flex items-center justify-between"
-                      >
-                        <>
-                          <span
-                            onClick={() => setCurrentFlow(flow)}
-                            // className="dark:text-gray-500"
-                            className="truncate overflow-hidden whitespace-nowrap flex-1 mr-2 cursor-pointer"
-                            style={{ maxWidth: "120px" }}
-                          >
-                            {flow.title}
-                          </span>
-                        </>
-                      </SidebarMenuSubItem>
-                    ))}
-                  </SidebarMenuSub>
+                  <SidebarMenuSub className="">{template.name}</SidebarMenuSub>
+                </Link>
+                {template.is_user_creator && (
+                  <Trash2
+                    size={16}
+                    color="red"
+                    onClick={() => handleDeleteTemplate(template.id)}
+                    className="cursor-pointer"
+                  />
                 )}
               </CollapsibleContent>
             </Collapsible>

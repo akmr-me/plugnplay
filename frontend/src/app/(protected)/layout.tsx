@@ -18,6 +18,8 @@ import {
 } from "@/components/ui/sidebar";
 import PlayNPublishButtonGroup from "@/components/canvas/PlayNPublishButtonGroup";
 import { useFlowSelectors } from "@/stores";
+import TemplateButtonGroup from "@/components/canvas/TemplateButtonGroup";
+import { useParams } from "next/navigation";
 
 export default function WithoutHeaderLayout({
   children,
@@ -25,6 +27,9 @@ export default function WithoutHeaderLayout({
   children: React.ReactNode;
 }>) {
   const { currentFlow, currentProject } = useFlowSelectors();
+  const params = useParams();
+  const isTemplatePage = !!params.templateId;
+
   return (
     <>
       <SignedIn>
@@ -58,7 +63,11 @@ export default function WithoutHeaderLayout({
                 </Breadcrumb>
                 <div className="flex-1" />
                 <Separator orientation="vertical" className="mr-2 h-4" />
-                <PlayNPublishButtonGroup />
+                {isTemplatePage ? (
+                  <TemplateButtonGroup />
+                ) : (
+                  <PlayNPublishButtonGroup />
+                )}
               </header>
               {children}
             </SidebarInset>

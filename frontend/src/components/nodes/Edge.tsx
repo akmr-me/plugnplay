@@ -12,6 +12,7 @@ import React from "react";
 import { Button } from "../ui/button";
 import { Trash2 } from "lucide-react";
 import useHistory from "@/hooks/useHistory";
+import { useParams } from "next/navigation";
 
 export default function Edge({
   sourceX,
@@ -40,6 +41,7 @@ export default function Edge({
     targetY,
   });
   const { removeEdge } = useHistory();
+  const params = useParams();
 
   return (
     <>
@@ -50,7 +52,7 @@ export default function Edge({
         markerEnd={markerEnd}
         path={d}
       />
-      {selected && (
+      {selected && !params.templateId && (
         <EdgeLabelRenderer>
           <Button
             variant="ghost"

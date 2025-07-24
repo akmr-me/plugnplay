@@ -15,6 +15,7 @@ import {
 } from "@/service/flow";
 import { useAuth, useUser } from "@clerk/nextjs";
 import { useParams, useRouter } from "next/navigation";
+import { toast } from "sonner";
 
 type WorkflowSidebarSubMenuProps = {
   project: Project;
@@ -41,30 +42,45 @@ export default function WorkflowSidebarSubMenu({
     if (!userConfirmation) return;
     const token = await getToken();
     if (!token || !user?.id) return;
-    const response = await deleteFlowByProjectAndFlowId(
-      token,
-      user.id,
-      workflowId,
-      projectId
-    );
+    try {
+      const response = await deleteFlowByProjectAndFlowId(
+        token,
+        user.id,
+        workflowId,
+        projectId
+      );
 
-    if (response.message) {
-      getAllFlows();
-    }
-    // // Optionally, clear the current flow if it was deleted
-    if (currentFlow?.id === workflowId) {
-      setCurrentFlow(null);
+      if (response.message) {
+        getAllFlows();
+      }
+      // // Optionally, clear the current flow if it was deleted
+      if (currentFlow?.id === workflowId) {
+        setCurrentFlow(null);
+      }
+      toast.success("Workflow deleted successfully!");
+    } catch (error) {
+      toast.error("Failed to delete workflow.", {
+        description:
+          error instanceof Error ? error.message : "An unknown error occurred",
+      });
     }
   };
 
   const handleDeleteProject = async (projectId: string) => {
     const token = await getToken();
     if (!token || !user?.id) return;
-
-    const response = await deleteProjectById(token, user.id, projectId);
-    if (response.message) {
-      setCurrentProject(null);
-      handleFetchAllProjects();
+    try {
+      const response = await deleteProjectById(token, user.id, projectId);
+      if (response.message) {
+        setCurrentProject(null);
+        handleFetchAllProjects();
+      }
+      toast.success("Project deleted successfully!");
+    } catch (error) {
+      toast.error("Failed to delete project.", {
+        description:
+          error instanceof Error ? error.message : "An unknown error occurred",
+      });
     }
   };
 

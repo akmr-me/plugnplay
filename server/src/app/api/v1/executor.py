@@ -191,7 +191,18 @@ async def workflow_websocket(
 
         # 3. Run the workflow
         print("before compiled graph")
-        compiled_graph = WorkflowGraphBuilder(workflow_read).build_graph()
+        try:
+            compiled_graph = WorkflowGraphBuilder(workflow_read).build_graph()
+        except Exception as e:
+            print(f"Error compiling workflow: {str(e)}")
+            await websocket.send_json(
+                {"error": f"Workflow compilation failed: {str(e)}"}
+            )
+            if user_id in active_ws_connections:
+                await active_ws_connections[user_id].close()
+                del active_ws_connections[user_id]
+                return
+
         trigger_node = [
             node for node in workflow_read["nodes"] if "trigger" in node["type"]
         ][0]
@@ -201,16 +212,6 @@ async def workflow_websocket(
 
         input_payload = {trigger_type: trigger_node["data"]["output"]}
         # result = await compiled_graph.ainvoke(
-        #     {
-        #         "input": input_payload,
-        #         "state": {
-        #             "nodes": {node["id"]: node for node in workflow_read["nodes"]},
-        #             "edges": {edge["id"]: edge for edge in workflow_read["edges"]},
-        #         },
-        #         "user_id": user_id,
-        #     }
-        # )
-        print("before streaming")
         try:
             async for chunk in compiled_graph.astream(
                 {

@@ -217,7 +217,6 @@ export default function HttpRequestDetals({
           },
         },
       };
-      console.log("88888888888888888888888888888888888888");
       await httpRequest(
         currentNode,
         { nodes: getNodes(), edges: getEdges() },
@@ -225,8 +224,10 @@ export default function HttpRequestDetals({
         token,
         user?.id
       );
+      toast.success("Request sent successfully!");
     } catch (error) {
       console.error("Request error:", error, { node });
+      toast.error("Failed to send request.");
     } finally {
       setLoading(false);
     }
@@ -558,7 +559,7 @@ export default function HttpRequestDetals({
                   size="sm"
                   className="flex items-center gap-1"
                   disabled={loading}
-                  isLoading={loading}
+                  loading={loading}
                   onClick={handleTestRequest}
                 >
                   <TestTube className="h-3 w-3" />
