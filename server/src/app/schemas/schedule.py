@@ -31,6 +31,7 @@ class ScheduleRead(ScheduleBase):
     updated_at: Optional[datetime]
     deleted_at: Optional[datetime]
     is_deleted: bool
+    is_active: bool
 
     class Config:
         from_attributes = True
@@ -41,6 +42,8 @@ class ScheduleCreate(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     schedule_type: ScheduleType
+    # is_active: bool
+    # timezone: str
     run_at: Optional[datetime] = None  # only required if schedule_type is "once"
 
 
@@ -56,6 +59,7 @@ class ScheduleUpdate(BaseModel):
 
     schedule_type: Optional[ScheduleType] = None
     run_at: Optional[datetime] = None
+    is_active: Optional[bool] = None
 
 
 # === Soft Delete schema ===

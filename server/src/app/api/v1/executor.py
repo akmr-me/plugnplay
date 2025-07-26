@@ -24,6 +24,7 @@ from app.crud.crud_workflows import crud_workflows
 from app.models.workflow import Workflow
 from app.schemas.workflow import WorkflowRead
 from urllib.parse import parse_qs
+from app.services.send_custom_http_request import send_custom_http_request
 
 from app.core.websoket_store import active_ws_connections
 
@@ -129,7 +130,10 @@ async def run_workflow_nodes(
     # 3. Get associated credentials (if needed)
     # Example: credential_id stored on workflow
     # print("input data", input_data)
-    result = await structure_invocation(input_data)
+    try:
+        result = await structure_invocation(input_data)
+    except Exception as e:
+        raise HTTPException(status_code=400, detail={"error": str(e)})
     # print(result)
     # 4. Simulate node execution logic
     # try:
@@ -275,3 +279,75 @@ async def workflow_websocket(
         print(f"User {user_id} disconnected.")
         if user_id in active_ws_connections:
             del active_ws_connections[user_id]
+
+
+@router.post("/excecutor/{workflow_id}/node/send_email", response_class=JSONResponse)
+async def send_email_node(
+    request: Request,
+    workflow_id: UUID,
+    db: AsyncSession = Depends(async_get_db),
+    # current_user: Annotated[dict, Depends(get_current_user)],
+) -> JSONResponse:
+    # 1. Get input JSON
+    try:
+        input_data: dict = await request.json()
+        print()
+        print()
+        print(input_data)
+        print()
+        print()
+        # Form content for http request
+        http_data = {
+            "httpMethod": "POST",
+            "url": "https://api.resend.com/emails",
+            "includeBody": True,
+            "bodyContent": {
+                "from": input_data["fromEmail"],
+                "to": input_data["toEmails"],
+                "cc": input_data["ccEmails"],
+                "bcc": input_data["bccEmails"],
+                "subject": input_data["subject"],
+                "html": input_data["body"],
+            },
+            "credentialId": input_data["credentialId"],
+            "authType": input_data.get("authType", "bearer"),
+        }
+
+        print("http_data", http_data)
+
+        response = await send_custom_http_request(http_data=http_data)
+        print(response)
+
+        # 3. Get associated credentials (if needed)
+        # Example: credential_id stored on workflow
+
+    except Exception as e:
+        print("Error while sending email", e)
+        raise HTTPException(
+            status_code=400,
+            detail={"short_error": "Invalid JSON payload", "error": str(e)},
+        )
+
+    # 2. Get the workflow from DB and verify ownership
+
+    return JSONResponse(content={"message": "Email sent successfully"})
+
+
+# {
+#     from: "Amresh <onboarding@resend.dev>",
+#     to: "someone@example.com",
+#     subject: "Hello from Resend",
+#     html: "<p>This is a test email</p>",
+#   }
+# {
+#     "credentialId": "019842ac-02e7-74b0-94af-136e619471e6",
+#     "fromEmail": "kumar.akumar.amresh@gmail.com",
+#     "fromName": "Amresh Kumar",
+#     "toEmails": ["0to1official@gmail.com"],
+#     "ccEmails": [],
+#     "bccEmails": [],
+#     "subject": "Today's New letter",
+#     "body": "Dear,\nsaching this is email to remide you today work rest.\n\nbye",
+#     "priority": "normal",
+#     "format": "html",
+# }

@@ -30,7 +30,7 @@ export const scheduleTypes = [
     value: "daily",
     label: "Daily",
     description: "Run once per day at specific time",
-    disable: true,
+    disable: false,
   },
   {
     value: "weekly",

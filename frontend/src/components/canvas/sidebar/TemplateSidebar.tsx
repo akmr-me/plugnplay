@@ -7,13 +7,18 @@ import {
   SidebarMenu,
   SidebarMenuSub,
 } from "../../ui/sidebar";
-import { RefreshCcw, Trash2 } from "lucide-react";
+import { FileText, RefreshCcw, Trash2 } from "lucide-react";
 import { Collapsible, CollapsibleContent } from "@/components/ui/collapsible";
 import { deleteTemplate, getTemplates } from "@/service/node";
 import { useAuth, useUser } from "@clerk/nextjs";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { toast } from "sonner";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 export default function TemplateSidebar() {
   const { user } = useUser();
@@ -61,14 +66,30 @@ export default function TemplateSidebar() {
           <SidebarMenu>
             <Collapsible className="group/collapsible" open>
               <CollapsibleContent className="flex justify-between items-center">
-                <Link
-                  href={`/canvas/template/${template.id}`}
-                  className={
-                    template.id === params.templateId ? "font-bold" : ""
-                  }
-                >
-                  <SidebarMenuSub className="">{template.name}</SidebarMenuSub>
-                </Link>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Link
+                      href={`/canvas/template/${template.id}`}
+                      className={
+                        template.id === params.templateId ? "font-bold" : ""
+                      }
+                    >
+                      <SidebarMenuSub className="">
+                        {template.name}
+                      </SidebarMenuSub>
+                    </Link>
+                  </TooltipTrigger>
+                  <TooltipContent
+                    side="right"
+                    className="max-w-xs p-3 text-sm leading-relaxed bg-gray-900 text-white border-gray-700"
+                    sideOffset={8}
+                  >
+                    <div className="flex items-start gap-2">
+                      <FileText className="w-4 h-4 mt-0.5 opacity-80 flex-shrink-0" />
+                      <p className="text-left">{template.description}</p>
+                    </div>
+                  </TooltipContent>
+                </Tooltip>
                 {template.is_user_creator && (
                   <Trash2
                     size={16}

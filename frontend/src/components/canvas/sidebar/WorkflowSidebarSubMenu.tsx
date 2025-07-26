@@ -98,15 +98,7 @@ export default function WorkflowSidebarSubMenu({
       router.push(`/canvas/project/${projectId}`);
       return;
     }
-    const token = await getToken();
-    if (!token || !user?.id) return;
-    const response = await getFlowDetailsByProjectAndFlowId(
-      token,
-      user.id,
-      workflowId,
-      projectId
-    );
-    if (response) setCurrentFlow(response);
+
     router.push(`/canvas/project/${projectId}/flow/${workflowId}`);
   };
 

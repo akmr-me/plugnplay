@@ -111,6 +111,9 @@ class WorkflowBase(BaseModel):
         ),
     ]
 
+    class Config:
+        from_attributes = True
+
 
 class WorkflowCreate(WorkflowBase):
     """Schema for creating a new Workflow."""

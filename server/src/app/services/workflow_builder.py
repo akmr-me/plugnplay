@@ -10,6 +10,7 @@ from enum import Enum
 from app.services.workflow_template_parser import WorkflowTemplateParser
 from app.services.openai_agent import structure_invocation
 from app.services.send_custom_http_request import send_custom_http_request
+from app.services.build_resend_http_data import build_resend_http_data
 
 
 def with_node_id(func, node_id):
@@ -77,16 +78,12 @@ async def open_ai_tool_node(state: dict, node_id: str) -> dict:
 
 async def http_programming_tool_node(state: dict, node_id: str) -> dict:
     parser = WorkflowTemplateParser()
-    # print("Running HTTP Programming Tool Node")
-    # print()
-    # print()
+
     template = state["state"]["nodes"][node_id]["data"]["state"]
     parsed_data = parser.parse_templates(template, state["input"])
     # print(parsed_data)
     response = await send_custom_http_request(parsed_data)
     # print("HTTP Response:", response)
-    # print()
-    # print()
     state["input"][NodeType.HTTP_PROGRAMMING_TOOLS] = response
     return state
 
@@ -101,6 +98,28 @@ async def text_other_tool_node(state: dict, node_id: str) -> dict:
     return state
 
 
+async def mail_other_tool_node(state: dict, node_id: str) -> dict:
+    parser = WorkflowTemplateParser()
+    print("Running Mail Other Tool Node")
+    template = state["state"]["nodes"][node_id]["data"]["state"]
+    parsed_data = parser.parse_templates(template, state["input"])
+    print("[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]")
+    print(parsed_data)
+    http_data = build_resend_http_data(parsed_data)
+    print("[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]")
+    print(http_data)
+    response = await send_custom_http_request(http_data)
+
+    state["input"][NodeType.MAIL_OTHER_TOOLS] = response
+    return state
+
+
+async def schedule_trigger_node(state: dict, node_id: str) -> dict:
+    print("Running Schedule Trigger Node")
+    # state[NodeType.SCHEDULE_TRIGGER] = "Triggered with data: " + str(state.get("input", {}))
+    return state
+
+
 # === Node Function Map ===
 NODE_FUNCTION_MAP: Dict[NodeType, Callable[[dict], dict]] = {
     NodeType.FORM_TRIGGER: form_trigger_node,
@@ -108,6 +127,8 @@ NODE_FUNCTION_MAP: Dict[NodeType, Callable[[dict], dict]] = {
     NodeType.HTTP_PROGRAMMING_TOOLS: http_programming_tool_node,
     NodeType.TEXT_OTHER_TOOLS: text_other_tool_node,
     NodeType.MANUAL_TRIGGER: form_trigger_node,
+    NodeType.MAIL_OTHER_TOOLS: mail_other_tool_node,
+    NodeType.SCHEDULE_TRIGGER: schedule_trigger_node,
     # Add more mappings as you implement new node types
 }
 

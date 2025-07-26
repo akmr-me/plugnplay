@@ -1,4 +1,5 @@
 "use client";
+
 import React, { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -13,34 +14,60 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Clock, Calendar, Play, TestTube2, Settings } from "lucide-react";
+import { Clock, Calendar, Play, TestTube2 } from "lucide-react";
 import DetailsModal from "./Modal";
 import WorkflowJSON from "./WorkflowJSON";
 import { intervalUnits, scheduleTypes, timezones } from "@/constants/edges";
 import { useAuth } from "@clerk/nextjs";
-import { createAndUpdateSchedule, getSchedule } from "@/service/node";
+import {
+  createAndUpdateSchedule,
+  getSchedule,
+  updateScheduleStatus,
+} from "@/service/node";
 import { useReactFlow } from "@xyflow/react";
+import { toast } from "sonner";
+import { useParams } from "next/navigation";
 
-const formatForDatetimeLocal = (isoString) => {
+const formatForDatetimeLocal = (isoString: string) => {
   if (!isoString) return "";
   return new Date(isoString).toISOString().slice(0, 16); // removes Z and trims to correct format
 };
 
-export default function ScheduleDetails({ setSelectedNode, node }) {
+type ScheduleDetailsProps = {
+  setSelectedNode: (node: unknown) => void;
+  node: unknown;
+};
+
+export default function ScheduleDetails({
+  setSelectedNode,
+  node,
+}: ScheduleDetailsProps) {
   const { getToken } = useAuth();
   const { updateNodeData } = useReactFlow();
+  const [loading, setLoading] = useState(false);
+  const params = useParams();
+  const isTemplatePage = !!params.templateId;
   const [scheduleType, setScheduleType] = useState(
     node.data.state?.scheduleType || "once"
   );
   const [intervalValue, setIntervalValue] = useState("5");
   const [intervalUnit, setIntervalUnit] = useState("minutes");
   const [cronExpression, setCronExpression] = useState("0 0 * * *");
-  const [specificTime, setSpecificTime] = useState("09:00");
+  const [specificTime, setSpecificTime] = useState(() => {
+    const now = node.data.state?.specificDate
+      ? new Date(node.data.state?.specificDate)
+      : new Date();
+    const hours = now.getHours().toString().padStart(2, "0");
+    const minutes = now.getMinutes().toString().padStart(2, "0");
+    return `${hours}:${minutes}`;
+  });
   const [specificDate, setSpecificDate] = useState(
     node.data.state?.specificDate || ""
   );
   const [timezone, setTimezone] = useState("Asia/Kolkata");
-  const [scheduleStatus, setScheduleStatus] = useState("active");
+  const [scheduleStatus, setScheduleStatus] = useState(
+    node?.data?.state?.scheduleStatus || "active"
+  );
   console.log({ specificDate });
   const getNextRunTime = () => {
     const now = new Date();
@@ -93,14 +120,30 @@ export default function ScheduleDetails({ setSelectedNode, node }) {
     }
     const token = await getToken();
     if (!token) return null;
-    await createAndUpdateSchedule(
-      token,
-      node.workflowId,
-      scheduleType,
-      specificDate
-    );
+    try {
+      let formatedDate = specificDate;
+      const hasTime = ["daily", "weekly", "monthly"].includes(scheduleType);
+      if (hasTime) {
+        const [hours, minutes] = specificTime.split(":");
+        const today = new Date();
+        formatedDate = today.setHours(parseInt(hours), parseInt(minutes), 0, 0);
+      }
+      console.log({ formatedDate });
+      await createAndUpdateSchedule(
+        token,
+        node.workflowId,
+        scheduleType,
+        formatedDate
+      );
+      toast.success("Schedule updated successfully!");
+    } catch (error) {
+      console.error("Error updating schedule:", error);
+      toast.error("Failed to update schedule.", {
+        description: error instanceof Error ? error.message : String(error),
+      });
+    }
   };
-
+  console.log({ specificTime });
   useEffect(() => {
     async function getLatestSchedule() {
       const token = await getToken();
@@ -109,11 +152,46 @@ export default function ScheduleDetails({ setSelectedNode, node }) {
       console.log("get date", data);
       updateNodeData(node.id, {
         ...node.data,
-        state: { scheduleType: data.schedule_type, specificDate: data.run_at },
+        state: {
+          scheduleType: data.schedule_type,
+          specificDate: data.run_at,
+          scheduleStatus: data.is_active ? "active" : "paused",
+        },
       });
     }
-    getLatestSchedule();
+    if (!isTemplatePage) getLatestSchedule();
   }, []);
+
+  const handleChangeScheduleStatus = async () => {
+    const token = await getToken();
+    if (!token) return null;
+    const updatedStatus = scheduleStatus === "active" ? "paused" : "active";
+    try {
+      setLoading(true);
+      const data = await updateScheduleStatus(
+        token,
+        node.workflowId,
+        updatedStatus
+      );
+      setScheduleStatus(updatedStatus);
+      updateNodeData(node.id, {
+        ...node.data,
+        state: {
+          scheduleType: data.schedule_type,
+          specificDate: data.run_at,
+          scheduleStatus: data.is_active ? "active" : "paused",
+        },
+      });
+      toast.success("Schedule updated successfully!");
+    } catch (error) {
+      console.error("Error updating schedule:", error);
+      toast.error("Failed to update schedule.", {
+        description: error instanceof Error ? error.message : String(error),
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <DetailsModal setSelectedNode={setSelectedNode}>
@@ -305,11 +383,11 @@ export default function ScheduleDetails({ setSelectedNode, node }) {
               <Button
                 variant={scheduleStatus === "active" ? "default" : "outline"}
                 size="sm"
-                onClick={() =>
-                  setScheduleStatus(
-                    scheduleStatus === "active" ? "paused" : "active"
-                  )
-                }
+                onClick={handleChangeScheduleStatus}
+                disabled={loading}
+                loading={loading}
+                loadingText="Saving..."
+                className="cursor-pointer"
               >
                 {scheduleStatus === "active" ? "Active" : "Paused"}
               </Button>

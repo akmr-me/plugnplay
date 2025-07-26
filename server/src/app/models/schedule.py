@@ -60,3 +60,6 @@ class Schedule(Base):
         DateTime(timezone=True), default=None
     )
     is_deleted: Mapped[bool] = mapped_column(Boolean, default=False, index=True)
+    is_active: Mapped[bool] = mapped_column(
+        Boolean, default=True, index=True, nullable=False
+    )

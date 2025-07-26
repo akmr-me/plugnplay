@@ -60,12 +60,19 @@ async def send_custom_http_request(
             # Handle GraphQL or structured API errors
             if "errors" in data and data["errors"]:
                 raise Exception(f"API Error: {data['errors']}")
+            if "error" in data and data["error"]:
+                raise Exception(f"API Error: {data['error']}")
 
             return data
 
         except (httpx.HTTPStatusError, httpx.RequestError) as e:
+            # Catch 4xx and 5xx HTTP errors here
             print("HTTP error:", str(e))
-            raise e  # Optional: re-raise or wrap
+            raise Exception(
+                f"HTTP Error: {e.response.status_code} {e.response.text}"
+                if hasattr(e, "response")
+                else str(e)
+            ) from e
 
         except ValueError:
             # JSON parsing failed — fallback to raw text

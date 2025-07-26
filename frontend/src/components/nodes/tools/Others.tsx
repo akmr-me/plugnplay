@@ -17,37 +17,42 @@ const Others = [
     icon: Mail,
     label: "Mail",
     component: <p>compoent</p>,
+    isDisabled: false,
   },
   {
     type: NodeType.NotionOtherTools,
     icon: NotionFill,
     label: "Notion",
     component: <p>compoent</p>,
+    isDisabled: true,
   },
   {
     type: NodeType.SleepOtherTools,
     icon: Sleep,
     label: "Sleep",
     component: <p>compoent</p>,
+    isDisabled: true,
   },
   {
     type: NodeType.ConditionalOtherTools,
     icon: Conditional,
     label: "Conditional",
     component: <p>compoent</p>,
+    isDisabled: true,
   },
   {
     type: NodeType.TextOtherTools,
     icon: ClipboardCopy,
     label: "Text",
     component: <p>compoent</p>,
+    isDisabled: false,
   },
 ];
 
-function OtherToolItem({ type, icon, label }) {
+function OtherToolItem({ type, icon, label, isDisabled }) {
   const handleDragStart = useNodeDrag(type);
   const IconComponent = icon;
-  const isDisabled = type !== "text-other-tool"; // Replace with actual logic if needed
+  // const isDisabled = type !== "text-other-tool"; // Replace with actual logic if needed
   const cursorStyle = isDisabled
     ? "cursor-not-allowed opacity-50"
     : "cursor-pointer";
@@ -80,6 +85,7 @@ export default function OtherTools() {
               type={item.type}
               icon={item.icon}
               label={item.label}
+              isDisabled={item.isDisabled}
             />
           );
         })}

@@ -1,11 +1,18 @@
 from langchain_openai import ChatOpenAI
 from langchain_core.prompts import ChatPromptTemplate
 from langgraph.graph import StateGraph, END
+from langchain_core.exceptions import OutputParserException
+from openai import BadRequestError
 from typing import Literal
 from ..crud.crud_credentials import crud_credentials
 from ..schemas.credential import CredentialRead
 from app.core.db.context import db_context
 import json
+
+DEFAULT_JSON_SYSTEM_PROMPT = (
+    "You are a helpful assistant. Always respond ONLY in valid JSON format. "
+    "Do not include explanations or formatting, just return the JSON object."
+)
 
 
 def create_open_agent(
@@ -28,9 +35,16 @@ def create_open_agent(
     # print("user_prompt", user_prompt, api_key)
 
     # Step 2: Create LangChain prompt
+
+    final_system_prompt = (
+        system_prompt.strip()
+        if system_prompt and system_prompt.strip()
+        else DEFAULT_JSON_SYSTEM_PROMPT
+    )
+
     prompt = ChatPromptTemplate.from_messages(
         [
-            ("system", system_prompt),
+            ("system", final_system_prompt),
             ("user", user_prompt),
         ]
     )
@@ -75,12 +89,35 @@ async def structure_invocation(data):
     print(credential)
     api_key = credential["api_key_value"]
 
-    run_chain = create_open_agent(
-        api_key=api_key,
-        model=model,
-        system_prompt=system_prompt,
-        user_prompt=prompt,
-        # response_format=response_format,
-    )
+    import traceback
+
+    cached_error = None
+
+    try:
+        run_chain = create_open_agent(
+            api_key=api_key,
+            model=model,
+            system_prompt=system_prompt,
+            user_prompt=prompt,
+            # response_format="json_object",
+        )
+    except BadRequestError as e:
+        # OpenAI SDK error directly exposed
+        error_data = e.response.json()
+        cached_error = error_data.get("error", {}).get("message", str(e))
+        print("Cached OpenAI error:", cached_error)
+        raise ValueError(f"OpenAI BadRequestError: {cached_error}")
+
+    except OutputParserException as e:
+        # LangChain output parsing failed — could be due to invalid JSON
+        cached_error = str(e)
+        print("LangChain OutputParserException:", cached_error)
+        raise ValueError(f"LangChain output parsing error: {cached_error}")
+
+    except Exception as e:
+        # Generic error handler
+        cached_error = str(e)
+        print("Unhandled LangChain error:", traceback.format_exc())
+        raise ValueError(f"Unhandled error: {cached_error}")
 
     return run_chain

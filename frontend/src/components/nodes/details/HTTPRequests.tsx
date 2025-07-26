@@ -66,13 +66,12 @@ export default function HttpRequestDetals({
 }: HttpRequestDetailsProps) {
   const { getToken } = useAuth();
   const { user } = useUser();
-  const { getNodes, getEdges } = useReactFlow();
+  const { getNodes, getEdges, updateNodeData } = useReactFlow();
   const [loading, setLoading] = useState(false);
   const [disableConfigSaving, setDisableConfigSaving] = useState(false);
   const [inputs] = useState(() =>
     getInputOrOutPutData("input", getEdges(), node, getNodes())
   );
-  const { updateNodeData } = useReactFlow();
   const [httpMethod, setHttpMethod] = useState(
     node.data?.state?.httpMethod || "GET"
   );

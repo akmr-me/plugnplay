@@ -199,6 +199,27 @@ export const createAndUpdateSchedule = async (
   return await response.json();
 };
 
+export const updateScheduleStatus = async (
+  token: string,
+  workflowId: string,
+  scheduleStatus: "active" | "paused"
+) => {
+  const EndPoint =
+    process.env.NEXT_PUBLIC_API_URL +
+    "schedule/" +
+    workflowId +
+    "/update_status";
+  const response = await fetch(EndPoint, {
+    method: "PATCH",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({ is_active: scheduleStatus === "active" }),
+  });
+  return await response.json();
+};
+
 export const deleteSchedule = async (token: string, workflowId: string) => {
   const EndPoint = process.env.NEXT_PUBLIC_API_URL + "schedule/" + workflowId;
   const response = await fetch(EndPoint, {
