@@ -30,12 +30,31 @@ import { useParams } from "next/navigation";
 
 const formatForDatetimeLocal = (isoString: string) => {
   if (!isoString) return "";
-  return new Date(isoString).toISOString().slice(0, 16); // removes Z and trims to correct format
+
+  const date = new Date(isoString);
+
+  const pad = (n: number) => n.toString().padStart(2, "0");
+
+  const year = date.getFullYear();
+  const month = pad(date.getMonth() + 1);
+  const day = pad(date.getDate());
+  const hours = pad(date.getHours());
+  const minutes = pad(date.getMinutes());
+
+  return `${year}-${month}-${day}T${hours}:${minutes}:00`;
 };
 
 type ScheduleDetailsProps = {
   setSelectedNode: (node: unknown) => void;
   node: unknown;
+};
+
+const formatForTime = (isoString: string) => {
+  if (!isoString) return "";
+  const date = new Date(isoString);
+  const hours = date.getHours().toString().padStart(2, "0");
+  const minutes = date.getMinutes().toString().padStart(2, "0");
+  return `${hours}:${minutes}`;
 };
 
 export default function ScheduleDetails({
@@ -92,25 +111,36 @@ export default function ScheduleDetails({
         break;
       case "once":
         if (specificDate) {
-          const [datePart, timePart = specificTime] = (specificDate.includes(
-            "Z"
-          )
-            ? formatForDatetimeLocal(specificDate)
-            : specificDate
-          ).includes("T")
-            ? specificDate.split("T")
-            : [specificDate, specificTime];
+          console.log("specificDate is UTC:", specificDate);
+
+          // ✅ Parse UTC date string directly
+          const utcDate = new Date(specificDate);
+
+          // ✅ Convert to IST by adjusting to Asia/Kolkata
+          const istDateString = utcDate.toLocaleString("en-CA", {
+            timeZone: "Asia/Kolkata",
+            hour12: false,
+          });
+
+          // istDateString format: "2025-07-27 01:30:00"
+          const [datePart, timePart] = istDateString.split(", ");
           console.log({ datePart, timePart });
+
           const [year, month, day] = datePart.split("-").map(Number);
           const [hour, minute] = timePart.split(":").map(Number);
+
+          // ✅ Create IST Date object using local time
           nextRun = new Date(year, month - 1, day, hour, minute);
+
+          console.log("✅ IST nextRun:", nextRun);
         }
+
         break;
       default:
         return "Based on cron expression";
     }
 
-    return nextRun.toLocaleString();
+    return nextRun.toLocaleString("en-IN", { timeZone: "Asia/Kolkata" });
   };
 
   const handleSubmitSchedule = async () => {
@@ -150,14 +180,20 @@ export default function ScheduleDetails({
       if (!token) return null;
       const data = await getSchedule(token, node.workflowId);
       console.log("get date", data);
+      const updatedState = {
+        scheduleType: data.schedule_type,
+        specificDate: data.run_at,
+        scheduleStatus: data.is_active ? "active" : "paused",
+      };
       updateNodeData(node.id, {
         ...node.data,
-        state: {
-          scheduleType: data.schedule_type,
-          specificDate: data.run_at,
-          scheduleStatus: data.is_active ? "active" : "paused",
-        },
+        state: updatedState,
       });
+      setScheduleStatus(updatedState.scheduleStatus);
+      setSpecificDate(updatedState.specificDate);
+      setScheduleType(updatedState.scheduleType);
+      const hasTime = ["daily", "weekly", "monthly"].includes(scheduleType);
+      if (hasTime) setSpecificTime(formatForTime(updatedState.specificDate));
     }
     if (!isTemplatePage) getLatestSchedule();
   }, []);
@@ -192,7 +228,7 @@ export default function ScheduleDetails({
       setLoading(false);
     }
   };
-
+  console.log(specificDate, specificTime);
   return (
     <DetailsModal setSelectedNode={setSelectedNode}>
       <WorkflowJSON node={node} type="input" />
