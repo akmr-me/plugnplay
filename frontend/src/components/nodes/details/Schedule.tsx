@@ -114,7 +114,7 @@ export default function ScheduleDetails({
   };
 
   const handleSubmitSchedule = async () => {
-    if (!specificDate) {
+    if (!(specificDate || specificTime)) {
       alert("Please select a date and run");
       return;
     }
